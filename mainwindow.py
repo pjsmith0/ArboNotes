@@ -1,32 +1,29 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jun  1 20:57:17 2026
-
-@author: pjs
-"""
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QSplitter,
     QVBoxLayout, QHBoxLayout,
     QStatusBar, QLabel,
-    QMessageBox
+    QMessageBox, QAbstractItemView
 )
 from PySide6.QtGui import (
     QFont, QKeySequence
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
-from notedata import NoteData
+from treeitemdata import TreeItemData
 from treewidget import NotesTreeWidget
 from editorwidget import EditorWidget
+from filerepository import FileRepository
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+
+    def __init__(self, file_repository: FileRepository):
         super().__init__()
+        self._file_repository = file_repository
         self.setWindowTitle("ArboNote")
         self.resize(1024, 700)
-        self._current_node: NoteData | None = None
+        self._current_node: TreeItemData | None = None
         self._build_ui()
         self._build_menus()
 
@@ -34,6 +31,7 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         # Central splitter
         splitter = QSplitter(Qt.Horizontal, self)
+        splitter.setStyleSheet("background:#f0f0f0;")
         self.setCentralWidget(splitter)
 
         # Left panel: tree
@@ -45,8 +43,7 @@ class MainWindow(QMainWindow):
         # Mini toolbar above tree
         tree_toolbar = QWidget()
         tree_toolbar.setFixedHeight(28)
-        tree_toolbar.setStyleSheet("background:#e8e8e8; border-bottom:1px solid #ccc;")
-        #tree_toolbar.setStyleSheet("border-bottom:1px solid #ccc;")
+        tree_toolbar.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
         ttl = QHBoxLayout(tree_toolbar)
         ttl.setContentsMargins(4, 2, 4, 2)
         ttl.setSpacing(2)
@@ -58,7 +55,7 @@ class MainWindow(QMainWindow):
 
         left_layout.addWidget(tree_toolbar)
 
-        self.tree = NotesTreeWidget()
+        self.tree = NotesTreeWidget(self._file_repository)
         self.tree.setStyleSheet("""
             QTreeWidget {
                 border: none;
@@ -72,6 +69,11 @@ class MainWindow(QMainWindow):
                 color: white;
             }
         """)
+        self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tree.setDragEnabled(True)
+        self.tree.setAcceptDrops(True)
+        self.tree.setDropIndicatorShown(True)
+        
         left_layout.addWidget(self.tree)
         left.setMinimumWidth(180)
         left.setMaximumWidth(320)
@@ -88,17 +90,18 @@ class MainWindow(QMainWindow):
         # Editor label strip
         editor_label = QWidget()
         editor_label.setFixedHeight(26)
-        editor_label.setStyleSheet(
-            "background:#f0f0f0; border-bottom:1px solid #ccc;")
+        editor_label.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
         ell = QHBoxLayout(editor_label)
         ell.setContentsMargins(8, 2, 4, 2)
-        self._editor_label = QLabel("Editor")
-        self._editor_label.setFont(QFont("SansSerif", 9, QFont.Bold))
-        ell.addWidget(self._editor_label)
+
+        _editor_label = QLabel("Editor")
+        _editor_label.setFont(QFont("SansSerif", 9, QFont.Bold))
+        ell.addWidget(_editor_label)
         ell.addStretch()
+
         right_layout.addWidget(editor_label)
 
-        self.editor = EditorWidget()
+        self.editor = EditorWidget(self._file_repository)
         right_layout.addWidget(self.editor)
         splitter.addWidget(right)
 
@@ -114,13 +117,8 @@ class MainWindow(QMainWindow):
         self.status.addWidget(self._status_label)
 
         # Signals
-        self.tree.nodeSelected.connect(self._on_node_selected)
-        self.tree.nodeRenamed.connect(self._on_node_renamed)
-        #btn_add_child.clicked.connect(
-        #    lambda: self.tree._add_child(self.tree.currentItem()))
-        #btn_add_sibling.clicked.connect(
-        #    lambda: self.tree._add_sibling(self.tree.currentItem()
-        #                                   or self.tree.topLevelItem(0)))
+        self.tree.node_deselected_signal.connect(self.node_deselected)
+        self.tree.node_selected_signal.connect(self.editor.load_note) #move the load_note to here
 
     def _small_btn(self, text, tip):
         from PySide6.QtWidgets import QPushButton
@@ -146,10 +144,8 @@ class MainWindow(QMainWindow):
 
         # File
         file_menu = mb.addMenu("&File")
-        file_menu.addAction("&New Note", self._new_note,
-                            QKeySequence.New)
-        file_menu.addAction("&Save",     self._save_note,
-                            QKeySequence.Save)
+        file_menu.addAction("&New Note", self._new_note, QKeySequence.New)
+        file_menu.addAction("&Save",     self._save_note, QKeySequence.Save)
         file_menu.addSeparator()
         file_menu.addAction("&Quit", self.close, QKeySequence.Quit)
 
@@ -161,18 +157,18 @@ class MainWindow(QMainWindow):
                 "ArboNote – tree-based note taking.\nBuilt with PySide6."))
 
     # ── Slots ──────────────────────────────────────────────────────────
-    def _on_node_selected(self, nd: NoteData):
+    def _on_node_selected(self, tree_item_data: TreeItemData):
         # Save previous note first
-        if self._current_node and self._current_node is not nd:
+        if self._current_node and self._current_node is not tree_item_data:
             self.editor.save_current()
 
-        self._current_node = nd
-        self.editor.load_note(nd)
-        self._status_label.setText(f"Selected: {nd.name}  >>  FileName: {nd.file_name}")
+        self._current_node = tree_item_data
+        #self.editor.load_note(tree_item_data.nodeName)
+        #self._status_label.setText(f"Selected: {tree_item_data.nodeName}  >>  FileName: {tree_item_data.fileName}")
 
-    def _on_node_renamed(self, nd: NoteData):
-        if self._current_node is nd:
-            self._status_label.setText(f"Selected: {nd.name}  >>  FileName: {nd.file_name}")
+    def _on_node_renamed(self, tree_item_data: TreeItemData):
+        if self._current_node is tree_item_data:
+            self._status_label.setText(f"Selected: {tree_item_data.nodeName}  >>  FileName: {tree_item_data.fileName}")
 
     def _new_note(self):
         self.tree._add_child(self.tree.currentItem())
@@ -186,7 +182,8 @@ class MainWindow(QMainWindow):
         self.editor.save_current()
         event.accept()
 
-
+    def node_deselected(self, tid: TreeItemData):
+        self._file_repository.save(tid, self.editor.get_markdown())
 
 
 

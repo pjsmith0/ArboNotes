@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jun  1 20:48:44 2026
-
-@author: pjs
-"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import List
-import json
 
 
 @dataclass
-class Node:
+class NoteData:
     nodeName: str
     fileName: str
-    children: List["Node"] = field(default_factory=list)
+    children: List["NoteData"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -27,7 +20,7 @@ class Node:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Node":
+    def from_dict(cls, data: dict) -> "NoteData":
         return cls(
             nodeName=data["nodeName"],
             fileName=data["fileName"],

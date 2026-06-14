@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""
-TreeNotes - A hierarchical note-taking app with rich text editing.
-Requires: PyQt6
-Install:  pip install PyQt6
-"""
 
 import sys
-from mainwindow import MainWindow
 
+from filerepository import FileRepository
+from mainwindow import MainWindow
+from config import Config
 from PySide6.QtWidgets import (QApplication)
 
 def main():
-    #app = QApplication(sys.argv)
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("ArboNote")
     app.setStyle("Fusion")
 
-    window = MainWindow()
-    window.show()
-    #sys.exit(app.exec())
-    app.exec()
+    config = Config()
+    filerepository = FileRepository(config)
 
+    window = MainWindow(filerepository)
+    window.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
