@@ -796,9 +796,6 @@ class EditorWidget(QWidget):
     # Convenience methods
     # ------------------------------------------------------------------
 
-    def set_text(self, text: str):
-        self._text_edit.setPlainText(text)
-
     def get_markdown(self) -> str:
         return self._text_edit.toMarkdown()
 
