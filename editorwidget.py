@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QMessageBox,
 )
+from bs4 import BeautifulSoup
 
 from filerepository import FileRepository
 
@@ -250,11 +251,11 @@ class EditorWidget(QWidget):
 
         self.toolbar1.addSeparator()
 
-        toggle_markdown_button = QPushButton()
-        toggle_markdown_button.setIcon(QIcon("icons/markdown_16dp.png"))
-        toggle_markdown_button.setToolTip("Toggle HTML")
-        toggle_markdown_button.clicked.connect(self.toggle_markdown)
-        self.toolbar1.addWidget(toggle_markdown_button)
+        toggle_html_button = QPushButton()
+        toggle_html_button.setIcon(QIcon("icons/html_16dp.png"))
+        toggle_html_button.setToolTip("Toggle HTML")
+        toggle_html_button.clicked.connect(self.toggle_html)
+        self.toolbar1.addWidget(toggle_html_button)
 
         # ------------------------------------------------------------------
         # Second toolbar row
@@ -763,41 +764,40 @@ class EditorWidget(QWidget):
     def redo(self):
         self._text_edit.redo()
 
-    def toggle_markdown(self):
+    def toggle_html(self):
         if self._text_edit.acceptRichText():
-            # Switch to MD source view
-            md = self._text_edit.toMarkdown()
+            # Switch to HTML source view
+            html = self._clean_text(self._text_edit.toHtml())
             self._text_edit.setAcceptRichText(False)
-            self._text_edit.setPlainText(md)
+            self._text_edit.setPlainText(html)
         else:
             # Switch back to rich text view
-            md = self._text_edit.toPlainText()
+            html = self._text_edit.toPlainText()
             self._text_edit.setAcceptRichText(True)
-            self._text_edit.setMarkdown(md)
-
-    # ------------------------------------------------------------------
-    # Notes API expected by MainWindow
-    # ------------------------------------------------------------------
+            self._text_edit.setHtml(html)
 
     def load_note(self, tree_item_data):
         self._current_note = tree_item_data
-
-        #home = expanduser("~")
-        #with open(home + "/arbonote_data/" + tree_item_data.fileName, "r") as file:
-        #    text = file.read()
         text = self._file_repository.load_file(tree_item_data.fileName)
-
-        self._text_edit.setMarkdown(text)
+        self._text_edit.setHtml(text)
 
     def save_current(self, callback=None):
         self.statusMessage.emit("Note saved")
 
-    # ------------------------------------------------------------------
-    # Convenience methods
-    # ------------------------------------------------------------------
-
-    def get_markdown(self) -> str:
-        return self._text_edit.toMarkdown()
+    def get_html(self) -> str:
+        return self._clean_text(self._text_edit.toHtml())
 
     def editor(self) -> QTextEdit:
         return self._text_edit
+
+    def _clean_text(self, text):
+        soup = BeautifulSoup(text, 'html.parser')
+
+        # Remove all script tags
+        for script in soup.find_all(['head', 'script']):
+            script.decompose()
+
+        for tag in soup.find_all():
+            tag.attrs.pop('style', None)
+
+        return soup.prettify()

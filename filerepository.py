@@ -24,7 +24,7 @@ class FileRepository:
             file.write(text)
 
     def create_file(self, text: str):
-        new_file_name = str(f"{uuid.uuid4()}.md")
+        new_file_name = str(f"{uuid.uuid4()}.html")
         new_file_path = self._config.get_data_dir() / new_file_name
 
         if not new_file_path.exists():

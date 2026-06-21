@@ -18,6 +18,7 @@ import datamapper
 class NotesTreeWidget(QTreeWidget):
     node_deselected_signal = Signal(TreeItemData)
     node_selected_signal = Signal(TreeItemData)
+    node_created_signal = Signal(str)
 
     def __init__(self, file_repository: FileRepository, parent=None):
         super().__init__(parent)
@@ -93,11 +94,13 @@ class NotesTreeWidget(QTreeWidget):
             new_item = QTreeWidgetItem(parent_item, [name])
             parent_item.setExpanded(True)
 
-        tree_item_data = TreeItemData(name, self._file_repository.create_file(self._generate_header_from_name(name)))
+        text_header = self._generate_header_from_name(name)
+        tree_item_data = TreeItemData(name, self._file_repository.create_file(text_header))
         new_item.setData(0, Qt.UserRole, tree_item_data)
         new_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
         self.setCurrentItem(new_item)
         self._file_repository.save_tree_data(self._serialize_tree())
+        self.node_created_signal.emit(text_header)
 
     def _add_sibling(self, item):
         name, ok = QInputDialog.getText(self, "New Sibling", "Node name:")
@@ -161,7 +164,6 @@ class NotesTreeWidget(QTreeWidget):
             ]
         }
 
-
     def _serialize_tree(self) -> str:
         root = self.topLevelItem(0)
         data = self._item_to_dict(root)
@@ -173,9 +175,8 @@ class NotesTreeWidget(QTreeWidget):
         print(json_formatted_str)
 
     def _generate_header_from_name(self, name):
-        nl = os.linesep
         text = self._capitilize_text(name)
-        return f"## {text}{nl}---{nl}{nl}"
+        return f"<h1>{text}</h1><hr>"
 
     def _capitilize_text(self, text):
         if text[0].isupper():

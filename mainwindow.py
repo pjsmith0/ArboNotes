@@ -4,7 +4,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QSplitter,
     QVBoxLayout, QHBoxLayout,
     QStatusBar, QLabel,
-    QMessageBox, QAbstractItemView
+    QMessageBox, QAbstractItemView,
+    QPushButton
 )
 from PySide6.QtGui import (
     QFont, QKeySequence
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
         self.resize(1024, 700)
         self._current_node: TreeItemData | None = None
         self._build_ui()
+        self._configure_signals()
         self._build_menus()
 
     # ── UI construction ────────────────────────────────────────────────
@@ -56,19 +58,19 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(tree_toolbar)
 
         self.tree = NotesTreeWidget(self._file_repository)
-        self.tree.setStyleSheet("""
-            QTreeWidget {
-                border: none;
-                font-size: 13px;
-                outline: none;
-                background: #f7f7f7;
-            }
-            QTreeWidget::item { padding: 2px 4px; }
-            QTreeWidget::item:selected {
-                background: #3a7bd5;
-                color: white;
-            }
-        """)
+        # self.tree.setStyleSheet("""
+        #     QTreeWidget {
+        #         border: none;
+        #         font-size: 13px;
+        #         outline: none;
+        #         background: #f7f7f7;
+        #     }
+        #     QTreeWidget::item { padding: 2px 4px; }
+        #     QTreeWidget::item:selected {
+        #         background: #3a7bd5;
+        #         color: white;
+        #     }
+        # """)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
@@ -110,18 +112,18 @@ class MainWindow(QMainWindow):
 
         # Status bar
         self.status = QStatusBar()
-        self.status.setStyleSheet(
-            "background:#f0f0f0;")
+        self.status.setStyleSheet("background:#f0f0f0;")
         self.setStatusBar(self.status)
         self._status_label = QLabel("No note selected")
         self.status.addWidget(self._status_label)
 
+    def _configure_signals(self):
         # Signals
         self.tree.node_deselected_signal.connect(self.node_deselected)
-        self.tree.node_selected_signal.connect(self.editor.load_note) #move the load_note to here
+        self.tree.node_selected_signal.connect(self.editor.load_note)
+        self.tree.node_created_signal.connect(self.editor._text_edit.setHtml)
 
     def _small_btn(self, text, tip):
-        from PySide6.QtWidgets import QPushButton
         btn = QPushButton(text)
         btn.setToolTip(tip)
         btn.setFixedHeight(22)
@@ -183,7 +185,7 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def node_deselected(self, tid: TreeItemData):
-        self._file_repository.save(tid, self.editor.get_markdown())
+        self._file_repository.save(tid, self.editor.get_html())
 
 
 
