@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         # Central splitter
         splitter = QSplitter(Qt.Horizontal, self)
-        splitter.setStyleSheet("background:#f0f0f0;")
+        #splitter.setStyleSheet("background:#f0f0f0;")
         self.setCentralWidget(splitter)
 
         # Left panel: tree
@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         # Mini toolbar above tree
         tree_toolbar = QWidget()
         tree_toolbar.setFixedHeight(28)
-        tree_toolbar.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
+        #tree_toolbar.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
         ttl = QHBoxLayout(tree_toolbar)
         ttl.setContentsMargins(4, 2, 4, 2)
         ttl.setSpacing(2)
@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         # Editor label strip
         editor_label = QWidget()
         editor_label.setFixedHeight(26)
-        editor_label.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
+        #editor_label.setStyleSheet("background:#f0f0f0; border-bottom:1px solid #ccc;")
         ell = QHBoxLayout(editor_label)
         ell.setContentsMargins(8, 2, 4, 2)
 
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
 
         # Status bar
         self.status = QStatusBar()
-        self.status.setStyleSheet("background:#f0f0f0;")
+        #self.status.setStyleSheet("background:#f0f0f0;")
         self.setStatusBar(self.status)
         self._status_label = QLabel("No note selected")
         self.status.addWidget(self._status_label)
@@ -127,22 +127,22 @@ class MainWindow(QMainWindow):
         btn = QPushButton(text)
         btn.setToolTip(tip)
         btn.setFixedHeight(22)
-        btn.setStyleSheet("""
-            QPushButton {
-                font-size: 11px;
-                padding: 1px 6px;
-                background: #ddd;
-                border: 1px solid #bbb;
-                border-radius: 3px;
-            }
-            QPushButton:hover { background: #ccc; }
-        """)
+        # btn.setStyleSheet("""
+        #     QPushButton {
+        #         font-size: 11px;
+        #         padding: 1px 6px;
+        #         background: #ddd;
+        #         border: 1px solid #bbb;
+        #         border-radius: 3px;
+        #     }
+        #     QPushButton:hover { background: #ccc; }
+        # """)
         return btn
 
     # ── Menu bar ───────────────────────────────────────────────────────
     def _build_menus(self):
         mb = self.menuBar()
-        mb.setStyleSheet("background:#f0f0f0;")
+        # mb.setStyleSheet("background:#f0f0f0;")
 
         # File
         file_menu = mb.addMenu("&File")

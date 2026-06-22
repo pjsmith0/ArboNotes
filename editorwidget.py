@@ -145,25 +145,25 @@ class EditorWidget(QWidget):
         # Two toolbar rows
         #
         self.toolbar1 = QToolBar()
-        self.toolbar1.setStyleSheet("background:#f0f0f0;")
+        # self.toolbar1.setStyleSheet("background:#f0f0f0;")
 
         self.toolbar2 = QToolBar()
-        self.toolbar2.setStyleSheet("background:#f0f0f0;")
+        # self.toolbar2.setStyleSheet("background:#f0f0f0;")
 
         self._text_edit = QTextEdit(self)
         #self._text_edit.setStyleSheet("background:#e8e8e8;")
-        self._text_edit.setStyleSheet("""
-            QTextEdit {
-                background: #ffffff;
-                color: #1a1a1a;
-                font-family: Arial;
-                font-size: 10pt;
-                border: none;
-                padding: 4px;
-                selection-background-color: #b3d4f5;
-                selection-color: #000000;
-            }
-        """)
+        # self._text_edit.setStyleSheet("""
+        #     QTextEdit {
+        #         background: #ffffff;
+        #         color: #1a1a1a;
+        #         font-family: Arial;
+        #         font-size: 10pt;
+        #         border: none;
+        #         padding: 4px;
+        #         selection-background-color: #b3d4f5;
+        #         selection-color: #000000;
+        #     }
+        # """)
 
         layout = QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

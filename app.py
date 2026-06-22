@@ -2,6 +2,8 @@
 
 import sys
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from filerepository import FileRepository
 from mainwindow import MainWindow
 from config import Config
@@ -9,13 +11,14 @@ from PySide6.QtWidgets import (QApplication)
 
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
+    QGuiApplication.styleHints().setColorScheme(Qt.ColorScheme.Light)
     app.setApplicationName("ArboNote")
     app.setStyle("Fusion")
 
     config = Config()
-    filerepository = FileRepository(config)
+    file_repository = FileRepository(config)
 
-    window = MainWindow(filerepository)
+    window = MainWindow(file_repository)
     window.show()
     sys.exit(app.exec())
 
