@@ -1,5 +1,4 @@
 import os
-from idlelib.tree import TreeItem
 
 from config import Config
 import uuid

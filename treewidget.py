@@ -144,7 +144,6 @@ class NotesTreeWidget(QTreeWidget):
     def _on_selection_changed(self, current, _previous):
         if current:
             tree_item_data: TreeItemData = current.data(0, Qt.UserRole)
-            print('_on_selection_changed -> ' + json.dumps(tree_item_data.__dict__))
 
             # save old data
             if _previous:
