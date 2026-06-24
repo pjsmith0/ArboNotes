@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-import os
 from operator import concat
-
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (    
     QTreeWidget, QTreeWidgetItem, QMenu, 
     QInputDialog, QMessageBox, QStyle
 )
 import json
-
 from filerepository import FileRepository
 from notedata import NoteData
 from treeitemdata import TreeItemData
@@ -33,7 +30,7 @@ class NotesTreeWidget(QTreeWidget):
 
     def _populate_defaults(self):
         tree_file_content = self._file_repository.get_tree_data()
-        self._pretty_print(tree_file_content)
+        #self._pretty_print(tree_file_content)
         tree_data = NoteData.from_dict(tree_file_content)
         self._add_item(None, tree_data)
 
@@ -42,6 +39,7 @@ class NotesTreeWidget(QTreeWidget):
         new_item = QTreeWidgetItem([tid.nodeName])
         new_item.setData(0, Qt.UserRole, tid)
         new_item.setExpanded(True)
+        new_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
         
         if parent_item is None:
             self.addTopLevelItem(new_item)

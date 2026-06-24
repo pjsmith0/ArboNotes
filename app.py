@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-
 from filerepository import FileRepository
 from mainwindow import MainWindow
 from config import Config
 from PySide6.QtWidgets import (QApplication)
+
 
 def main():
 

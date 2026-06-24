@@ -25,7 +25,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 from bs4 import BeautifulSoup
-
 from filerepository import FileRepository
 
 

@@ -11,7 +11,6 @@ from PySide6.QtGui import (
     QFont, QKeySequence
 )
 from PySide6.QtCore import Qt, Signal
-
 from treeitemdata import TreeItemData
 from treewidget import NotesTreeWidget
 from editorwidget import EditorWidget
