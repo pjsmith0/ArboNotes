@@ -1,4 +1,4 @@
-# ArboNote
+# ArboNotes
 
 A JavaFX desktop note-taking app built around a tree of notes:
 - **Left panel** – a `TreeView` of your notes (loaded from `tree.json` in `~/arbonote_data/`). Each node is an HTML note saved under `~/arbonote_data/`.
@@ -25,7 +25,7 @@ mvn javafx:run
 
 ```bash
 mvn clean package
-java -jar target/ArboNote-1.0-SNAPSHOT-all.jar
+java -jar target/ArboNotes-1.0-SNAPSHOT-all.jar
 ```
 
 ## Build a native executable
@@ -39,9 +39,9 @@ java -jar target/ArboNote-1.0-SNAPSHOT-all.jar
 mvn clean package -Ppackage-linux
 ```
 Produces:
-- `ArboNote-*.AppImage` — a **single-file portable executable** (bundled JRE, no Java or install needed; `chmod +x` and run)
-- `ArboNote-*.deb` — an installer for Debian/Ubuntu
-- `target/installer/ArboNote/` — the self-contained app image folder
+- `ArboNotes-*.AppImage` — a **single-file portable executable** (bundled JRE, no Java or install needed; `chmod +x` and run)
+- `ArboNotes-*.deb` — an installer for Debian/Ubuntu
+- `target/installer/ArboNotes/` — the self-contained app image folder
 
 To build just the AppImage from an existing app image: `APPIMAGE=/path/to/appimagetool ./build-appimage.sh`.
 
@@ -52,8 +52,8 @@ build-windows.bat
 mvn clean package -Ppackage-windows
 ```
 Produces:
-- `target\ArboNote-portable.exe` — a **single-file portable exe** (embeds the jar; no install, but the target machine needs Java **25+**)
-- `target\installer\ArboNote\` — a **self-contained portable app** (bundled JRE, no Java needed; run `ArboNote.exe`)
+- `target\ArboNotes-portable.exe` — a **single-file portable exe** (embeds the jar; no install, but the target machine needs Java **25+**)
+- `target\installer\ArboNotes\` — a **self-contained portable app** (bundled JRE, no Java needed; run `ArboNotes.exe`)
 
 ## Building both automatically (CI)
 

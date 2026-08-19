@@ -51,16 +51,16 @@ jobs:
       - name: Archive Windows app image (portable, self-contained)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -Path target/installer/ArboNote -DestinationPath ArboNote-windows-app-image.zip
+        run: Compress-Archive -Path target/installer/ArboNotes -DestinationPath ArboNotes-windows-app-image.zip
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ArboNote-${{ matrix.name }}
+          name: ArboNotes-${{ matrix.name }}
           path: |
             target/installer/*
-            target/ArboNote-portable.exe
-            ArboNote-*-app-image.zip
+            target/ArboNotes-portable.exe
+            ArboNotes-*-app-image.zip
           if-no-files-found: error
 
   release:

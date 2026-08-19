@@ -7,7 +7,7 @@
   <artifactId>ArboNotes</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>ArboNote</name>
+  <name>ArboNotes</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -189,7 +189,7 @@
       is one profile per platform:
         - package-linux:   app image (portable launcher) + .deb installer
         - package-windows: app image (portable launcher) + single-file
-                           portable ArboNote-portable.exe (Launch4j; embeds
+                           portable ArboNotes-portable.exe (Launch4j; embeds
                            the fat jar, requires Java 25+ installed)
       Run with:  mvn clean package -Ppackage-linux   (or -Ppackage-windows)
     -->
@@ -231,7 +231,7 @@
                   <goal>jpackage</goal>
                 </goals>
                 <configuration>
-                  <name>ArboNote</name>
+                  <name>ArboNotes</name>
                   <appVersion>${package.version}</appVersion>
                   <vendor>pjs</vendor>
                   <mainClass>${start-class}</mainClass>
@@ -253,7 +253,7 @@
                 </goals>
                 <configuration>
                   <skip>${skip.deb}</skip>
-                  <name>ArboNote</name>
+                  <name>ArboNotes</name>
                   <appVersion>${package.version}</appVersion>
                   <vendor>pjs</vendor>
                   <mainClass>${start-class}</mainClass>
@@ -314,7 +314,7 @@
                   <goal>jpackage</goal>
                 </goals>
                 <configuration>
-                  <name>ArboNote</name>
+                  <name>ArboNotes</name>
                   <appVersion>${package.version}</appVersion>
                   <vendor>pjs</vendor>
                   <mainClass>${start-class}</mainClass>
@@ -342,9 +342,9 @@
                 </goals>
                 <configuration>
                   <headerType>gui</headerType>
-                  <outfile>${project.build.directory}/ArboNote-portable.exe</outfile>
+                  <outfile>${project.build.directory}/ArboNotes-portable.exe</outfile>
                   <jar>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</jar>
-                  <errTitle>ArboNote</errTitle>
+                  <errTitle>ArboNotes</errTitle>
                   <downloadUrl>https://adoptium.net/temurin/releases/?version=25</downloadUrl>
                   <classPath>
                     <mainClass>${start-class}</mainClass>
