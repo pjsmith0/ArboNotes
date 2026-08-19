@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ArboNote Editor</title>
+<link rel="stylesheet" href="quill/quill.snow.css">
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        background: #ffffff;
+        overflow: hidden;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+    #toolbar {
+        border: none;
+        border-bottom: 1px solid #d5d5d5;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        padding: 6px 8px;
+        flex: 0 0 auto;
+    }
+    #editor-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 8px 8px 8px;
+    }
+    .ql-container.ql-snow {
+        border: none;
+        font-size: 14px;
+    }
+
+    /* Table visibility inside the editor */
+    .ql-editor table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+    }
+    .ql-editor table td {
+        border: 1px solid #c8c8c8;
+        padding: 6px 8px;
+        outline: none;
+    }
+
+    /* Table toolbar buttons */
+    .ql-snow.ql-toolbar button.ql-table,
+    .ql-snow.ql-toolbar button.ql-table-row-above,
+    .ql-snow.ql-toolbar button.ql-table-row-below,
+    .ql-snow.ql-toolbar button.ql-table-col-left,
+    .ql-snow.ql-toolbar button.ql-table-col-right,
+    .ql-snow.ql-toolbar button.ql-table-delete-row,
+    .ql-snow.ql-toolbar button.ql-table-delete-col,
+    .ql-snow.ql-toolbar button.ql-table-delete {
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 16px 16px;
+    }
+    .ql-snow.ql-toolbar button.ql-table { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M6%206h4v4H6z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-row-above { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v4H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-row-below { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%2010h12v4H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-col-left { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h4v12H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-col-right { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M10%202h4v12H10z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-delete-row { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%206l12%204M14%206L2%2010%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-delete-col { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202l4%2012M10%202L6%2014%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E"); }
+    .ql-snow.ql-toolbar button.ql-table-delete { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M3%204.5h10l-.8%209.5H3.8z%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%2F%3E%3Cpath%20d%3D%22M2.5%204.5h11M6%204.5l.6-1.5h2.8l.6%201.5%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%2F%3E%3Cpath%20d%3D%22M6.8%207.5v3.5M9.2%207.5v3.5%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.2%22%2F%3E%3C%2Fsvg%3E"); }
+</style>
+</head>
+<body>
+<div id="toolbar">
+    <span class="ql-formats">
+        <select class="ql-header">
+            <option value="1">Heading 1</option>
+            <option value="2">Heading 2</option>
+            <option value="3">Heading 3</option>
+            <option selected></option>
+            <option value="pre">Preformatted</option>
+        </select>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-bold" title="Bold"></button>
+        <button class="ql-italic" title="Italic"></button>
+        <button class="ql-underline" title="Underline"></button>
+        <button class="ql-strike" title="Strikethrough"></button>
+        <select class="ql-color" title="Text color">
+            <option value="red"></option>
+            <option value="green"></option>
+            <option value="blue"></option>
+            <option value="orange"></option>
+            <option value="violet"></option>
+            <option value="#d0d1d2"></option>
+            <option selected></option>
+        </select>
+        <select class="ql-background" title="Highlight color">
+            <option value="red"></option>
+            <option value="green"></option>
+            <option value="blue"></option>
+            <option value="orange"></option>
+            <option value="violet"></option>
+            <option value="#d0d1d2"></option>
+            <option selected></option>
+        </select>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-align" value=""></button>
+        <button class="ql-align" value="center" title="Align center"></button>
+        <button class="ql-align" value="right" title="Align right"></button>
+        <button class="ql-align" value="justify" title="Align justify"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-list" value="ordered" title="Numbered list"></button>
+        <button class="ql-list" value="bullet" title="Bulleted list"></button>
+        <button class="ql-indent" value="-1" title="Decrease indent"></button>
+        <button class="ql-indent" value="+1" title="Increase indent"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-blockquote" title="Blockquote"></button>
+        <button class="ql-code-block" title="Code block"></button>
+        <button class="ql-link" title="Insert link"></button>
+        <button class="ql-clean" title="Remove formatting"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-table" value="insert-table" title="Insert table"></button>
+        <button class="ql-table-row-above" value="1" title="Insert row above"></button>
+        <button class="ql-table-row-below" value="1" title="Insert row below"></button>
+        <button class="ql-table-col-left" value="1" title="Insert column left"></button>
+        <button class="ql-table-col-right" value="1" title="Insert column right"></button>
+        <button class="ql-table-delete-row" value="1" title="Delete row"></button>
+        <button class="ql-table-delete-col" value="1" title="Delete column"></button>
+        <button class="ql-table-delete" value="1" title="Delete table"></button>
+    </span>
+</div>
+<div id="editor-container"></div>
+
+<script src="quill/quill.js"></script>
+<script>
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        placeholder: 'Start writing your note...',
+        modules: {
+            table: true,
+            toolbar: {
+                container: '#toolbar',
+                handlers: {
+                    table: function (value) {
+                        if (value === 'insert-table') {
+                            var table = this.quill.getModule('table');
+                            if (table) table.insertTable(2, 2);
+                        }
+                    },
+                    'table-row-above': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.insertRowAbove();
+                    },
+                    'table-row-below': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.insertRowBelow();
+                    },
+                    'table-col-left': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.insertColumnLeft();
+                    },
+                    'table-col-right': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.insertColumnRight();
+                    },
+                    'table-delete-row': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.deleteRow();
+                    },
+                    'table-delete-col': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.deleteColumn();
+                    },
+                    'table-delete': function () {
+                        var table = this.quill.getModule('table');
+                        if (table) table.deleteTable();
+                    }
+                }
+            }
+        }
+    });
+
+    function setContent(html) {
+        if (!html || html.length === 0) {
+            quill.setContents([]);
+            return;
+        }
+        var delta = quill.clipboard.convert({ html: html });
+        quill.setContents(delta, 'silent');
+    }
+
+    function getContent() {
+        return quill.root.innerHTML;
+    }
+</script>
+</body>
+</html>

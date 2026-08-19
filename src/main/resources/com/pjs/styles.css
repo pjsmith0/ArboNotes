@@ -1,0 +1,11 @@
+.tree-dir {
+    -fx-font-weight: bold;
+}
+
+.tree-file {
+    -fx-font-weight: normal;
+}
+
+.root {
+    -fx-font-size: 12px;
+}

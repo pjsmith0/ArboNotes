@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.example</groupId>
+  <artifactId>ArboNotes</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>ArboNote</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>25</maven.compiler.release>
+    <start-class>com.pjs.App</start-class>
+    <java.version>25</java.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <flatlaf.version>3.6.2</flatlaf.version>
+    <commons-codec.version>1.13</commons-codec.version>
+    <jcefmaven.version>143.0.14</jcefmaven.version>
+    <lombok.version>1.18.42</lombok.version>
+
+    <javafx.version>25.0.4</javafx.version>
+    <javafx.plugin.version>0.0.8</javafx.plugin.version>
+    <main.class>com.pjs.App</main.class>
+    <jpro.version>2022.1.0</jpro.version>
+    <rta.version>1.2.6</rta.version>
+
+    <package.version>1.0.0</package.version>
+    <package.maintainer>pjsmith0 &lt;pjsmith0@users.noreply.github.com&gt;</package.maintainer>
+    <skip.deb>false</skip.deb>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.11.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.15.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.22.0</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+    <!-- Apache Commons -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>${commons-codec.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.20.0</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.gluonhq</groupId>
+      <artifactId>rich-text-area</artifactId>
+      <version>${rta.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kordamp.ikonli</groupId>
+      <artifactId>ikonli-lineawesome-pack</artifactId>
+      <version>12.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kordamp.ikonli</groupId>
+      <artifactId>ikonli-javafx</artifactId>
+      <version>12.3.1</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Compiler plugin with Lombok -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <!-- Shade plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>${project.artifactId}-${project.version}-all</finalName>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>${start-class}</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!--
+      Native packaging. jpackage only builds for the OS it runs on, so there
+      is one profile per platform:
+        - package-linux:   app image (portable launcher) + .deb installer
+        - package-windows: app image (portable launcher) + single-file
+                           portable ArboNote-portable.exe (Launch4j; embeds
+                           the fat jar, requires Java 25+ installed)
+      Run with:  mvn clean package -Ppackage-linux   (or -Ppackage-windows)
+    -->
+    <profile>
+      <id>package-linux</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>stage-main-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <delete dir="${project.build.directory}/jpackage-input"/>
+                    <mkdir dir="${project.build.directory}/jpackage-input"/>
+                    <copy file="${project.build.directory}/${project.artifactId}-${project.version}-all.jar"
+                          tofile="${project.build.directory}/jpackage-input/${project.artifactId}-${project.version}-all.jar"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <version>1.8.0</version>
+            <executions>
+              <execution>
+                <id>app-image</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jpackage</goal>
+                </goals>
+                <configuration>
+                  <name>ArboNote</name>
+                  <appVersion>${package.version}</appVersion>
+                  <vendor>pjs</vendor>
+                  <mainClass>${start-class}</mainClass>
+                  <mainJar>${project.artifactId}-${project.version}-all.jar</mainJar>
+                  <input>${project.build.directory}/jpackage-input</input>
+                  <destination>${project.build.directory}/installer</destination>
+                  <type>APP_IMAGE</type>
+                  <icon>src/main/resources/icons/arbonote.png</icon>
+                  <javaOptions>
+                    <option>--enable-native-access=ALL-UNNAMED</option>
+                  </javaOptions>
+                </configuration>
+              </execution>
+              <execution>
+                <id>deb</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jpackage</goal>
+                </goals>
+                <configuration>
+                  <skip>${skip.deb}</skip>
+                  <name>ArboNote</name>
+                  <appVersion>${package.version}</appVersion>
+                  <vendor>pjs</vendor>
+                  <mainClass>${start-class}</mainClass>
+                  <mainJar>${project.artifactId}-${project.version}-all.jar</mainJar>
+                  <input>${project.build.directory}/jpackage-input</input>
+                  <destination>${project.build.directory}/installer</destination>
+                  <type>DEB</type>
+                  <icon>src/main/resources/icons/arbonote.png</icon>
+                  <linuxShortcut>true</linuxShortcut>
+                  <linuxAppCategory>Utility</linuxAppCategory>
+                  <linuxDebMaintainer>${package.maintainer}</linuxDebMaintainer>
+                  <javaOptions>
+                    <option>--enable-native-access=ALL-UNNAMED</option>
+                  </javaOptions>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>package-windows</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>stage-main-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <delete dir="${project.build.directory}/jpackage-input"/>
+                    <mkdir dir="${project.build.directory}/jpackage-input"/>
+                    <copy file="${project.build.directory}/${project.artifactId}-${project.version}-all.jar"
+                          tofile="${project.build.directory}/jpackage-input/${project.artifactId}-${project.version}-all.jar"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <version>1.8.0</version>
+            <executions>
+              <execution>
+                <id>app-image</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jpackage</goal>
+                </goals>
+                <configuration>
+                  <name>ArboNote</name>
+                  <appVersion>${package.version}</appVersion>
+                  <vendor>pjs</vendor>
+                  <mainClass>${start-class}</mainClass>
+                  <mainJar>${project.artifactId}-${project.version}-all.jar</mainJar>
+                  <input>${project.build.directory}/jpackage-input</input>
+                  <destination>${project.build.directory}/installer</destination>
+                  <type>APP_IMAGE</type>
+                  <javaOptions>
+                    <option>--enable-native-access=ALL-UNNAMED</option>
+                  </javaOptions>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <version>2.7.0</version>
+            <executions>
+              <execution>
+                <id>portable-exe</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>launch4j</goal>
+                </goals>
+                <configuration>
+                  <headerType>gui</headerType>
+                  <outfile>${project.build.directory}/ArboNote-portable.exe</outfile>
+                  <jar>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</jar>
+                  <errTitle>ArboNote</errTitle>
+                  <downloadUrl>https://adoptium.net/temurin/releases/?version=25</downloadUrl>
+                  <classPath>
+                    <mainClass>${start-class}</mainClass>
+                  </classPath>
+                  <jre>
+                    <minVersion>25</minVersion>
+                  </jre>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
