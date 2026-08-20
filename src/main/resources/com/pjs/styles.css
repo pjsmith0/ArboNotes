@@ -9,3 +9,16 @@
 .root {
     -fx-font-size: 12px;
 }
+
+.drag-over {
+    -fx-background-color: rgba(0, 120, 215, 0.12);
+    -fx-border-color: transparent transparent transparent rgba(0, 120, 215, 0.8);
+    -fx-border-width: 0 0 0 3;
+}
+
+.drag-over-edge {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(0, 120, 215, 0.9);
+    -fx-border-width: 2 0 2 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 120, 215, 0.4), 4, 0, 0, 1);
+}

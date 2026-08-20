@@ -20,6 +20,10 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -34,11 +38,14 @@ import java.util.Optional;
 
 public class TreeNotesApp extends Application  {
 
+    private static final DataFormat TREE_ITEM_FORMAT = new DataFormat("com.pjs.tree.drag");
+
     private Config config = new Config();
     private TreeView<TreeItemData> fileTree;
     private Label statusLabel;
     private WebRichTextEditor editor;
     private final FileSystemManager fileSystemManager;
+    private TreeItem<TreeItemData> draggedItem;
 
     public TreeNotesApp() {
         this.fileSystemManager = new FileSystemManager(config);
@@ -52,9 +59,9 @@ public class TreeNotesApp extends Application  {
         root.setBottom(buildStatusBar());
 
         Scene scene = new Scene(root, 1200, 800);
-        String css = getClass().getResource("/com/fileeditor/app/pjs/styles.css") == null
+        String css = getClass().getResource("/com/pjs/styles.css") == null
                 ? null
-                : getClass().getResource("/com/fileeditor/app/pjs/styles.css").toExternalForm();
+                : getClass().getResource("/com/pjs/styles.css").toExternalForm();
         if (css != null) {
             scene.getStylesheets().add(css);
         }
@@ -63,7 +70,7 @@ public class TreeNotesApp extends Application  {
         primaryStage.setScene(scene);
         try {
             primaryStage.getIcons().add(new Image(
-                    getClass().getResourceAsStream("/com/fileeditor/app/icon.png")));
+                    getClass().getResourceAsStream("/icons/arbonote.png")));
         } catch (Exception ignored) {
             // Icon is optional; ignore if not present.
         }
@@ -99,7 +106,6 @@ public class TreeNotesApp extends Application  {
         fileTree = new TreeView<>();
         fileTree.setShowRoot(true);
         fileTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        // TODO: do drag & drop handlers
 
         fileTree.setCellFactory(tv -> {
             TreeCell<TreeItemData> cell = new TreeCell<>() {
@@ -114,6 +120,87 @@ public class TreeNotesApp extends Application  {
                     }
                 }
             };
+
+            cell.setOnDragDetected(event -> {
+                TreeItem<TreeItemData> item = cell.getTreeItem();
+                if (item == null || item == fileTree.getRoot()) return;
+
+                draggedItem = item;
+                Dragboard db = cell.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent content = new ClipboardContent();
+                content.put(TREE_ITEM_FORMAT, item.getValue().getFileName());
+                db.setContent(content);
+                event.consume();
+            });
+
+            cell.setOnDragOver(event -> {
+                if (draggedItem == null) return;
+                TreeItem<TreeItemData> target = cell.getTreeItem();
+                if (target == null || target == draggedItem) return;
+                if (isDescendant(draggedItem, target)) return;
+
+                boolean onEdge = isOnEdge(cell, event.getY());
+                if (onEdge && target.getParent() == null && target == fileTree.getRoot()) return;
+
+                cell.getStyleClass().remove("drag-over");
+                cell.getStyleClass().remove("drag-over-edge");
+                cell.getStyleClass().add(onEdge ? "drag-over-edge" : "drag-over");
+
+                event.acceptTransferModes(TransferMode.MOVE);
+                event.consume();
+            });
+
+            cell.setOnDragEntered(event -> {
+                if (draggedItem == null) return;
+                TreeItem<TreeItemData> target = cell.getTreeItem();
+                if (target == null || target == draggedItem || isDescendant(draggedItem, target)) return;
+
+                boolean onEdge = isOnEdge(cell, event.getY());
+                if (onEdge && target.getParent() == null && target == fileTree.getRoot()) return;
+
+                cell.getStyleClass().add(onEdge ? "drag-over-edge" : "drag-over");
+            });
+
+            cell.setOnDragExited(event -> {
+                cell.getStyleClass().remove("drag-over");
+                cell.getStyleClass().remove("drag-over-edge");
+            });
+
+            cell.setOnDragDropped(event -> {
+                if (draggedItem == null) return;
+                TreeItem<TreeItemData> target = cell.getTreeItem();
+                if (target == null || target == draggedItem) return;
+                if (isDescendant(draggedItem, target)) return;
+
+                TreeItem<TreeItemData> oldParent = draggedItem.getParent();
+                boolean onEdge = isOnEdge(cell, event.getY());
+
+                if (onEdge) {
+                    TreeItem<TreeItemData> newParent = target.getParent() != null ? target.getParent() : fileTree.getRoot();
+                    oldParent.getChildren().remove(draggedItem);
+                    int dropIndex = newParent.getChildren().indexOf(target);
+                    boolean bottomEdge = isOnBottomEdge(cell, event.getY());
+                    if (bottomEdge) {
+                        dropIndex++;
+                    }
+                    newParent.getChildren().add(dropIndex, draggedItem);
+                    newParent.setExpanded(true);
+                } else {
+                    oldParent.getChildren().remove(draggedItem);
+                    target.getChildren().add(draggedItem);
+                    target.setExpanded(true);
+                }
+
+                fileSystemManager.saveTreeToJson(fileTree.getRoot());
+
+                TreeItem<TreeItemData> droppedItem = draggedItem;
+                draggedItem = null;
+                fileTree.getSelectionModel().select(droppedItem);
+                cell.getStyleClass().remove("drag-over");
+                cell.getStyleClass().remove("drag-over-edge");
+                event.setDropCompleted(true);
+                event.consume();
+            });
 
             // Create the ContextMenu
             TreeContextMenu contextMenu = new TreeContextMenu(fileSystemManager, cell);
@@ -191,6 +278,25 @@ public class TreeNotesApp extends Application  {
         );
         node.getChildren().forEach(child -> item.getChildren().add(toTreeItem(child)));
         return item;
+    }
+
+    private static final double EDGE_THRESHOLD = 0.25;
+
+    private boolean isDescendant(TreeItem<TreeItemData> ancestor, TreeItem<TreeItemData> node) {
+        TreeItem<TreeItemData> current = node.getParent();
+        while (current != null) {
+            if (current == ancestor) return true;
+            current = current.getParent();
+        }
+        return false;
+    }
+
+    private boolean isOnEdge(TreeCell<TreeItemData> cell, double y) {
+        return y < cell.getHeight() * EDGE_THRESHOLD || y > cell.getHeight() * (1 - EDGE_THRESHOLD);
+    }
+
+    private boolean isOnBottomEdge(TreeCell<TreeItemData> cell, double y) {
+        return y > cell.getHeight() * (1 - EDGE_THRESHOLD);
     }
 
     private HBox buildStatusBar() {

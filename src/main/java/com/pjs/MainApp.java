@@ -54,9 +54,9 @@ public class MainApp extends Application {
         root.setBottom(buildStatusBar());
 
         Scene scene = new Scene(root, 1200, 800);
-        String css = getClass().getResource("/com/fileeditor/app/pjs/styles.css") == null
+        String css = getClass().getResource("/com/pjs/styles.css") == null
                 ? null
-                : getClass().getResource("/com/fileeditor/app/pjs/styles.css").toExternalForm();
+                : getClass().getResource("/com/pjs/styles.css").toExternalForm();
         if (css != null) {
             scene.getStylesheets().add(css);
         }
@@ -302,7 +302,4 @@ public class MainApp extends Application {
         Platform.exit();
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
 }
