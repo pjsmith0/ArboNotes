@@ -34,6 +34,55 @@
         font-size: 14px;
     }
 
+    /* ---- Content typography ---- */
+    .ql-editor {
+        line-height: 1.55;
+        color: #24292f;
+    }
+    .ql-editor a {
+        color: #0065b3;
+    }
+    .ql-editor a:hover {
+        text-decoration: underline;
+    }
+    .ql-editor.ql-blank::before {
+        color: #9aa4ad;
+        font-style: italic;
+    }
+
+    /* Blockquotes: high-contrast callout style */
+    .ql-editor blockquote {
+        margin: 10px 0;
+        padding: 8px 14px;
+        border-left: 4px solid #0078d7;
+        border-radius: 0 6px 6px 0;
+        background-color: #eef5fc;
+        color: #2c3e50;
+        font-style: italic;
+    }
+    .ql-editor blockquote blockquote {
+        border-left-color: #005a9e;
+        background-color: #dfeefa;
+    }
+
+    /* Code blocks and inline code */
+    .ql-editor pre.ql-syntax {
+        background-color: #f6f8fa;
+        border: 1px solid #e2e8ef;
+        border-radius: 6px;
+        color: #24292f;
+        font-family: "Consolas", "DejaVu Sans Mono", monospace;
+        padding: 8px 12px;
+        overflow-x: auto;
+    }
+    .ql-editor code {
+        background-color: #f0f1f3;
+        border-radius: 3px;
+        padding: 1px 4px;
+        font-family: "Consolas", "DejaVu Sans Mono", monospace;
+        color: #c7254e;
+    }
+
     /* Table visibility inside the editor */
     .ql-editor table {
         border-collapse: collapse;

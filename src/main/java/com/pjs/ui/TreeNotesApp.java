@@ -308,6 +308,7 @@ public class TreeNotesApp extends Application  {
         statusLabel = new Label("No file open");
         statusLabel.setFont(Font.font(11));
         HBox box = new HBox(statusLabel);
+        box.getStyleClass().add("status-bar");
         box.setPadding(new Insets(4, 8, 4, 8));
         HBox.setHgrow(statusLabel, Priority.ALWAYS);
         return box;
