@@ -75,6 +75,11 @@ public class TreeNotesApp extends Application  {
             // Icon is optional; ignore if not present.
         }
         primaryStage.show();
+
+        TreeItem<TreeItemData> firstItem = fileTree.getRoot();
+        if (firstItem != null) {
+            fileTree.getSelectionModel().select(firstItem);
+        }
     }
 
     private MenuBar buildToolbar(Stage stage) {
