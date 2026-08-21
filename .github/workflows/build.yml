@@ -1,5 +1,5 @@
 # .github/workflows/build.yaml
-name: Build JavaFX Jar
+name: Build JavaFX Uber Jar
 
 on:
   push:
@@ -32,15 +32,24 @@ jobs:
           java-version: '25'
           cache: 'maven'
 
-      # os-maven-plugin (used by javafx-maven-plugin) auto-detects the
-      # correct classifier (win/linux/mac) for the runner it's on,
-      # so a plain `mvn package` picks up the right native JavaFX libs.
-      - name: Build with Maven
+      # os-maven-plugin auto-detects the classifier (win/linux/mac) for
+      # this runner, so javafx-maven-plugin pulls the matching native
+      # JavaFX libs and shade/assembly bundles them into the uber jar.
+      - name: Build uber jar
         run: mvn -B clean package
 
-      - name: Upload jar artifact
+      - name: Rename uber jar for clarity
+        shell: bash
+        run: |
+          mkdir -p dist
+          # adjust this glob if your shade/assembly plugin uses a
+          # different finalName / suffix (e.g. *-shaded.jar, *-all.jar)
+          find target -maxdepth 1 -name '*.jar' ! -name 'original-*.jar' \
+            -exec cp {} dist/app-${{ matrix.platform }}.jar \;
+
+      - name: Upload uber jar
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.platform }}
-          path: target/*.jar
+          path: dist/app-${{ matrix.platform }}.jar
           if-no-files-found: error
