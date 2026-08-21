@@ -67,10 +67,10 @@
 
     /* Code blocks and inline code */
     .ql-editor pre.ql-syntax {
-        background-color: #f6f8fa;
-        border: 1px solid #e2e8ef;
+        background-color: rgb(27 30 36 / 0.6);
+        border: 1px solid rgb(27 30 36 / 0.6);
         border-radius: 6px;
-        color: #24292f;
+        color: #abb2bf;
         font-family: "Consolas", "DejaVu Sans Mono", monospace;
         padding: 8px 12px;
         overflow-x: auto;
@@ -289,6 +289,26 @@
         quill.insertText(index, text, 'user');
         quill.setSelection(index + text.length, 0, 'silent');
     }
+
+    /* JavaFX WebView delivers the keypad Enter without a usable key identity
+       ("Unidentified"/keyCode 0), so Quill never sees an Enter keypress and no
+       newline is inserted. Detect it here and insert one explicitly. Inserting
+       '\n' inherits the current line formats, so lists/quotes/code blocks
+       continue like a normal Enter. */
+    window.insertNumpadEnter = function () {
+        var range = quill.getSelection(true);
+        if (!range) return;
+        quill.insertText(range.index, range.length || 0, '\n', 'user');
+    };
+
+    document.addEventListener('keydown', function (e) {
+        var isNumpadEnter = e.code === 'NumpadEnter'
+            || (e.location === 3 && (e.key === 'Enter' || e.keyCode === 13));
+        if (!isNumpadEnter || e.defaultPrevented) return;
+        e.preventDefault();
+        e.stopPropagation();
+        window.insertNumpadEnter();
+    }, true);
 </script>
 </body>
 </html>

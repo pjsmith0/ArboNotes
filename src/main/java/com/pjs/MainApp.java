@@ -61,7 +61,7 @@ public class MainApp extends Application {
             scene.getStylesheets().add(css);
         }
 
-        primaryStage.setTitle("File Tree Rich Text Editor");
+        primaryStage.setTitle("ArboNotes");
         primaryStage.setScene(scene);
         try {
             primaryStage.getIcons().add(new Image(
