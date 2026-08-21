@@ -196,6 +196,50 @@
     function getContent() {
         return quill.root.innerHTML;
     }
+
+    /* ---- Clipboard / context-menu support ---- */
+    var lastSelection = null;
+    quill.on('selection-change', function (range) {
+        if (range) lastSelection = range;
+    });
+
+    function getSelectionJson() {
+        var range = quill.getSelection();
+        if (!range && lastSelection) {
+            quill.setSelection(lastSelection.index, lastSelection.length || 0, 'silent');
+            range = lastSelection;
+        }
+        return range ? JSON.stringify(range) : null;
+    }
+
+    function getSelectedText() {
+        var sel = window.getSelection();
+        if (!sel || sel.isCollapsed) return null;
+        return sel.toString();
+    }
+
+    function getSelectedHtml() {
+        var sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+        var div = document.createElement('div');
+        div.appendChild(sel.getRangeAt(0).cloneContents());
+        return div.innerHTML;
+    }
+
+    function deleteRange(index, length) {
+        quill.deleteText(index, length, 'user');
+    }
+
+    function pasteHtml(index, html) {
+        quill.focus();
+        quill.clipboard.dangerouslyPasteHTML(index, html, 'user');
+    }
+
+    function pasteText(index, text) {
+        quill.focus();
+        quill.insertText(index, text, 'user');
+        quill.setSelection(index + text.length, 0, 'silent');
+    }
 </script>
 </body>
 </html>
