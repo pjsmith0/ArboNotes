@@ -1,89 +1,46 @@
-name: Build native packages
+# .github/workflows/build.yaml
+name: Build JavaFX Jar
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "v*" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: linux
-            os: ubuntu-latest
-            profile: package-linux
-          - name: windows
-            os: windows-latest
-            profile: package-windows
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '25'
-          cache: maven
+          cache: 'maven'
 
-      - name: Install Linux packaging tools
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y fakeroot
+      # os-maven-plugin (used by javafx-maven-plugin) auto-detects the
+      # correct classifier (win/linux/mac) for the runner it's on,
+      # so a plain `mvn package` picks up the right native JavaFX libs.
+      - name: Build with Maven
+        run: mvn -B clean package
 
-      - name: Build jar and native packages
-        run: mvn -B clean package -P${{ matrix.profile }}
-
-      - name: Build Linux AppImage (single-file portable)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p /tmp/appimagetool
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool/appimagetool
-          chmod +x /tmp/appimagetool/appimagetool
-          APPIMAGE="/tmp/appimagetool/appimagetool --appimage-extract-and-run" ./build-appimage.sh
-
-      - name: Archive Windows app image (portable, self-contained)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Compress-Archive -Path target/installer/ArboNotes -DestinationPath ArboNotes-windows-app-image.zip
-
-      - name: Upload artifacts
+      - name: Upload jar artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ArboNotes-${{ matrix.name }}
-          path: |
-            target/installer/*
-            target/ArboNotes-portable.exe
-            ArboNotes-*-app-image.zip
+          name: app-${{ matrix.platform }}
+          path: target/*.jar
           if-no-files-found: error
-
-  release:
-    name: Publish GitHub Release
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release-assets
-          merge-multiple: true
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" \
-            release-assets/*.deb \
-            release-assets/*.AppImage \
-            release-assets/*.exe \
-            release-assets/*.zip \
-            --generate-notes
