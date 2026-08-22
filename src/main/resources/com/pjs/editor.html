@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>ArboNotes Editor</title>
 <link rel="stylesheet" href="quill/quill.snow.css">
+<link rel="stylesheet" href="highlight/styles/stackoverflow-light.min.css">
 <style>
     html, body {
         height: 100%;
@@ -52,29 +53,50 @@
 
     /* Blockquotes: high-contrast callout style */
     .ql-editor blockquote {
-        margin: 10px 0;
-        padding: 8px 14px;
-        border-left: 4px solid #0078d7;
-        border-radius: 0 6px 6px 0;
-        background-color: #eef5fc;
-        color: #2c3e50;
+        /*margin: 10px 0;*/
+        /*padding: 8px 14px;*/
+        /*border-left: 4px solid #0078d7;*/
+        /*border-radius: 0 6px 6px 0;*/
+        /*background-color: #eef5fc;*/
+        /*color: #2c3e50;*/
+        /*font-style: italic;*/
+        margin: 1.5rem 0;
+        padding: 0.5rem 1rem 0.5rem 1.25rem;
+        border-left: 4px solid #0078d7; /* Vibrant blue anchor line */
+        background-color: rgba(0, 120, 215, 0.06); /* Ultra-subtle blue tint */
+        color: rgb(27 30 36 / 0.6); /* Smooth gray body text */
         font-style: italic;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        border-radius: 0 4px 4px 0;
     }
     .ql-editor blockquote blockquote {
         border-left-color: #005a9e;
         background-color: #dfeefa;
     }
 
-    /* Code blocks and inline code */
-    .ql-editor pre.ql-syntax {
-        background-color: rgb(27 30 36 / 0.6);
-        border: 1px solid rgb(27 30 36 / 0.6);
-        border-radius: 6px;
-        color: #abb2bf;
-        font-family: "Consolas", "DejaVu Sans Mono", monospace;
-        padding: 8px 12px;
-        overflow-x: auto;
+    /* Quill 2 renders code blocks as
+       <div class="ql-code-block-container"><div class="ql-code-block">...</div></div>
+       (the old Quill 1 <pre class="ql-syntax"> markup is gone). quill.snow.css
+       paints the container dark via ".ql-snow .ql-editor .ql-code-block-container",
+       which out-specifies ".ql-editor ...", so mirror its selector here — this
+       <style> comes after the snow stylesheet, so equal specificity wins. */
+    .ql-snow .ql-editor .ql-code-block-container {
+        position: relative;
+        margin: 1.5rem 0;
+        padding: 1rem 1.25rem;
+        background-color: #eeeeee; /* Light grey background */
+        color: #24292f; /* Undo snow's near-white text or lines would be invisible */
+        border-left: 4px solid #d9dbde; /* Neutral code block boundary */
+        border-radius: 0 6px 6px 0;
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        overflow-x: auto; /* Enables horizontal scroll for long lines */
+        white-space: pre-wrap; /* Keeps line wraps working properly in Quill */
     }
+
+    /* Inline code */
     .ql-editor code {
         background-color: #f0f1f3;
         border-radius: 3px;
@@ -184,13 +206,16 @@
 </div>
 <div id="editor-container"></div>
 
+<script src="highlight/highlight.min.js"></script>
 <script src="quill/quill.js"></script>
 <script>
+
     var quill = new Quill('#editor-container', {
         theme: 'snow',
         placeholder: 'Start writing your note...',
         modules: {
             table: true,
+            syntax: true,
             toolbar: {
                 container: '#toolbar',
                 handlers: {
@@ -229,21 +254,49 @@
                         if (table) table.deleteTable();
                     }
                 }
-            }
+            },
+            // keyboard: {
+            //     bindings: {
+            //         // Handle Numpad Enter exactly like standard Enter
+            //         numpadEnter: {
+            //             key: 'NumpadEnter',
+            //             handler: function(range, context) {
+            //                 // Tell Quill to execute its default "Enter" structural paragraph break
+            //                 this.quill.keyboard.handleEnter(range, context);
+            //             }
+            //         }
+            //     }
+            // }
         }
     });
+
+    /* The syntax module mounts a <select class="ql-ui"> language picker inside
+       each code-block container. It is live UI, not content: saving it bakes
+       the whole option list into the note, and reloading that file flattens
+       the options into "PlainBashC++..." text paragraphs. Strip it both when
+       saving and when loading so already-polluted notes self-heal. */
+    function stripQuillUi(html) {
+        if (!html || html.indexOf('ql-ui') === -1) return html;
+        var holder = document.createElement('div');
+        holder.innerHTML = html;
+        var junk = holder.querySelectorAll('.ql-ui');
+        for (var i = junk.length - 1; i >= 0; i--) {
+            junk[i].parentNode.removeChild(junk[i]);
+        }
+        return holder.innerHTML;
+    }
 
     function setContent(html) {
         if (!html || html.length === 0) {
             quill.setContents([]);
             return;
         }
-        var delta = quill.clipboard.convert({ html: html });
+        var delta = quill.clipboard.convert({ html: stripQuillUi(html) });
         quill.setContents(delta, 'silent');
     }
 
     function getContent() {
-        return quill.root.innerHTML;
+        return stripQuillUi(quill.root.innerHTML);
     }
 
     /* ---- Clipboard / context-menu support ---- */
@@ -290,25 +343,28 @@
         quill.setSelection(index + text.length, 0, 'silent');
     }
 
-    /* JavaFX WebView delivers the keypad Enter without a usable key identity
-       ("Unidentified"/keyCode 0), so Quill never sees an Enter keypress and no
-       newline is inserted. Detect it here and insert one explicitly. Inserting
-       '\n' inherits the current line formats, so lists/quotes/code blocks
-       continue like a normal Enter. */
-    window.insertNumpadEnter = function () {
-        var range = quill.getSelection(true);
-        if (!range) return;
-        quill.insertText(range.index, range.length || 0, '\n', 'user');
-    };
+    /* Numpad Enter helper. JavaFX's GTK glass emits no character for
+       GDK_KEY_KP_Enter, so WebView delivers a keydown stripped of identity
+       ("key"/"code" empty, location STANDARD — never "NumpadEnter"/location 3)
+       and no newline is inserted. WebRichTextEditor detects that case on the
+       Java side (KEY_PRESSED + KeyCode.ENTER + empty character) and calls this.
+       Inserting '\n' inherits the current line formats, so lists/quotes/code
+       blocks continue like a normal Enter. */
+    // window.insertNumpadEnter = function () {
+    //     var range = quill.getSelection(true);
+    //     if (!range) return;
+    //     quill.insertText(range.index, range.length || 0, '\n', 'user');
+    // };
 
-    document.addEventListener('keydown', function (e) {
-        var isNumpadEnter = e.code === 'NumpadEnter'
-            || (e.location === 3 && (e.key === 'Enter' || e.keyCode === 13));
-        if (!isNumpadEnter || e.defaultPrevented) return;
-        e.preventDefault();
-        e.stopPropagation();
-        window.insertNumpadEnter();
-    }, true);
+    // window.addEventListener('keydown', function(e) {
+    //     // Check if the physical key is specifically the Numpad Enter
+    //     if (e.code === 'NumpadEnter') {
+    //         //window.insertNumpadEnter();
+    //         e.preventDefault(); // Prevents default behavior in the browser
+    //         e.stopPropagation(); // Stops it from bubbling up
+    //
+    //     }
+    // });
 </script>
 </body>
 </html>
