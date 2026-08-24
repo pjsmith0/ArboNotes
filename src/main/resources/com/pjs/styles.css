@@ -114,11 +114,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 120, 215, 0.4), 4, 0, 0, 1);
 }
 
-/* ===== Tab pane (left panel) ===== */
-.tab-pane > .tab-header-area {
-    -fx-padding: 0;
-}
-
 /* ===== Calendar view ===== */
 .calendar-view {
     -fx-padding: 8;

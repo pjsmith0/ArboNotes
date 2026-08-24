@@ -10,15 +10,12 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -38,7 +35,6 @@ import lombok.SneakyThrows;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Set;
 
 public class TreeNotesApp extends Application  {
 
@@ -57,9 +53,6 @@ public class TreeNotesApp extends Application  {
     private EditorSource editorSource = EditorSource.NONE;
     private TreeItemData currentTreeItemData;
     private LocalDate currentDailyNoteDate;
-    private TreeItem<TreeItemData> lastTreeSelection;
-    private Tab treeTab;
-    private Tab dateTab;
     private CalendarView calendarView;
 
     public TreeNotesApp() {
@@ -251,10 +244,7 @@ public class TreeNotesApp extends Application  {
             if (newV == null) {
                 return;
             }
-            lastTreeSelection = newV;
-            if (treeTab == null || treeTab.isSelected()) {
-                openTreeNote(newV);
-            }
+            openTreeNote(newV);
         });
 
         fileTree.setOnMouseClicked(evt -> {
@@ -269,60 +259,21 @@ public class TreeNotesApp extends Application  {
         editor = new WebRichTextEditor();
         editor.setPrefWidth(760);
 
-        TabPane treeTabPane = new TabPane();
-
-        treeTab = new Tab("Tree", fileTree);
-        treeTab.setClosable(false);
-
         calendarView = new CalendarView();
-        dateTab = new Tab("Date", calendarView);
-        dateTab.setClosable(false);
-
-        treeTabPane.getTabs().addAll(treeTab, dateTab);
-        distributeTabWidths(treeTabPane);
-
-        treeTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            if (newTab == dateTab) {
-                LocalDate today = LocalDate.now();
-                calendarView.setSelectedDate(today);
-                openDailyNote(today);
-            } else if (newTab == treeTab) {
-                TreeItem<TreeItemData> target = lastTreeSelection != null
-                        ? lastTreeSelection
-                        : fileTree.getSelectionModel().getSelectedItem();
-                if (target == null) {
-                    return;
-                }
-                if (target != fileTree.getSelectionModel().getSelectedItem()) {
-                    fileTree.getSelectionModel().select(target);
-                } else {
-                    openTreeNote(target);
-                }
-            }
-        });
-
+        calendarView.setMaxHeight(Region.USE_PREF_SIZE);
         calendarView.setOnDayClicked(this::openDailyNote);
+
+        SplitPane leftPane = new SplitPane();
+        leftPane.setOrientation(Orientation.VERTICAL);
+        leftPane.getItems().addAll(fileTree, calendarView);
+        leftPane.setDividerPositions(0.65);
 
         SplitPane split = new SplitPane();
         split.setOrientation(Orientation.HORIZONTAL);
-        split.getItems().addAll(treeTabPane, editor);
+        split.getItems().addAll(leftPane, editor);
         split.setDividerPositions(0.20);
-        SplitPane.setResizableWithParent(treeTabPane, Boolean.TRUE);
+        SplitPane.setResizableWithParent(leftPane, Boolean.TRUE);
         return split;
-    }
-
-    private void distributeTabWidths(TabPane tabPane) {
-        Runnable apply = () -> {
-            Set<Node> tabs = tabPane.lookupAll(".tab");
-            double width = tabPane.getWidth();
-            if (tabs.isEmpty() || width <= 0) {
-                return;
-            }
-            double tabWidth = width / tabs.size();
-            tabs.forEach(tab -> ((Region) tab).setPrefWidth(tabWidth));
-        };
-        tabPane.widthProperty().addListener((obs, oldWidth, newWidth) -> apply.run());
-        Platform.runLater(apply);
     }
 
     private String dailyNoteFileName(LocalDate date) {
