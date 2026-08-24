@@ -69,6 +69,10 @@ public class FileSystemManager {
         }
     }
 
+    public boolean fileExists(String fileName) {
+        return Files.exists(getAbsoluteFileLocation(fileName));
+    }
+
     @SneakyThrows
     public String loadData(String fileName) {
         File file = getAbsoluteFileLocation(fileName).toFile();

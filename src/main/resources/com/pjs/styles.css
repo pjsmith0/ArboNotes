@@ -113,3 +113,71 @@
     -fx-border-width: 2 0 2 0;
     -fx-effect: dropshadow(gaussian, rgba(0, 120, 215, 0.4), 4, 0, 0, 1);
 }
+
+/* ===== Tab pane (left panel) ===== */
+.tab-pane > .tab-header-area {
+    -fx-padding: 0;
+}
+
+/* ===== Calendar view ===== */
+.calendar-view {
+    -fx-padding: 8;
+    -fx-background-color: #fafafa;
+}
+
+.calendar-header .button {
+    -fx-background-color: transparent;
+    -fx-border-color: #d5d5d5;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8 2 8;
+}
+
+.calendar-header .button:hover {
+    -fx-background-color: rgba(0, 120, 215, 0.12);
+}
+
+.calendar-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #242424;
+    -fx-alignment: center;
+}
+
+.calendar-weekday {
+    -fx-text-fill: #5a5a5a;
+    -fx-font-size: 11px;
+}
+
+.calendar-grid {
+    -fx-hgap: 1;
+    -fx-vgap: 1;
+}
+
+.calendar-day {
+    -fx-alignment: center;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-text-fill: #242424;
+}
+
+.calendar-day:hover {
+    -fx-background-color: rgba(0, 120, 215, 0.08);
+}
+
+.calendar-day-other {
+    -fx-text-fill: #b8b8b8;
+}
+
+.calendar-day-today {
+    -fx-border-color: #0078d7;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 4;
+    -fx-font-weight: bold;
+}
+
+.calendar-day-selected {
+    -fx-background-color: #0078d7;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}

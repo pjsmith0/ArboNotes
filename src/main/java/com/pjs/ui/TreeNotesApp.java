@@ -10,13 +10,15 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
-import javafx.scene.control.ContextMenu;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -28,17 +30,22 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 public class TreeNotesApp extends Application  {
 
     private static final DataFormat TREE_ITEM_FORMAT = new DataFormat("com.pjs.tree.drag");
+    private static final DateTimeFormatter DAILY_NOTE_FILE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    private enum EditorSource { NONE, TREE_ITEM, DAILY_NOTE }
 
     private Config config = new Config();
     private TreeView<TreeItemData> fileTree;
@@ -46,6 +53,14 @@ public class TreeNotesApp extends Application  {
     private WebRichTextEditor editor;
     private final FileSystemManager fileSystemManager;
     private TreeItem<TreeItemData> draggedItem;
+
+    private EditorSource editorSource = EditorSource.NONE;
+    private TreeItemData currentTreeItemData;
+    private LocalDate currentDailyNoteDate;
+    private TreeItem<TreeItemData> lastTreeSelection;
+    private Tab treeTab;
+    private Tab dateTab;
+    private CalendarView calendarView;
 
     public TreeNotesApp() {
         this.fileSystemManager = new FileSystemManager(config);
@@ -233,32 +248,20 @@ public class TreeNotesApp extends Application  {
         fileTree.setRoot(rootItem);
 
         fileTree.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
-
-            TreeItemData prevSelectedData = Optional.ofNullable(oldV).map(TreeItem::getValue).orElseGet(() -> null);
-            TreeItemData newSelectedData = Optional.ofNullable(newV).map(TreeItem::getValue).orElseGet(() -> null);
-
-            if (prevSelectedData != null) {
-                String html = editor.getHtmlText();
-                fileSystemManager.saveTreeItem(prevSelectedData.getFileName(), html);
+            if (newV == null) {
+                return;
             }
-
-            if (newSelectedData != null) {
-                statusLabel.setText(" Selected: %s   >>   FileName: %s".formatted(
-                        newSelectedData.getNodeName(),
-                        newSelectedData.getFileName()));
-
-                String htmlToSet = fileSystemManager.loadData(newSelectedData.getFileName());
-                editor.setHtmlText(htmlToSet);
+            lastTreeSelection = newV;
+            if (treeTab == null || treeTab.isSelected()) {
+                openTreeNote(newV);
             }
-
         });
 
         fileTree.setOnMouseClicked(evt -> {
             if (evt.getClickCount() == 2) {
                 TreeItem<TreeItemData> item = fileTree.getSelectionModel().getSelectedItem();
                 if (item != null && item.getValue() != null) {
-                    String html = fileSystemManager.loadData(item.getValue().getFileName());
-                    editor.setHtmlText(html);
+                    openTreeNote(item);
                 }
             }
         });
@@ -266,12 +269,113 @@ public class TreeNotesApp extends Application  {
         editor = new WebRichTextEditor();
         editor.setPrefWidth(760);
 
+        TabPane treeTabPane = new TabPane();
+
+        treeTab = new Tab("Tree", fileTree);
+        treeTab.setClosable(false);
+
+        calendarView = new CalendarView();
+        dateTab = new Tab("Date", calendarView);
+        dateTab.setClosable(false);
+
+        treeTabPane.getTabs().addAll(treeTab, dateTab);
+        distributeTabWidths(treeTabPane);
+
+        treeTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab == dateTab) {
+                LocalDate today = LocalDate.now();
+                calendarView.setSelectedDate(today);
+                openDailyNote(today);
+            } else if (newTab == treeTab) {
+                TreeItem<TreeItemData> target = lastTreeSelection != null
+                        ? lastTreeSelection
+                        : fileTree.getSelectionModel().getSelectedItem();
+                if (target == null) {
+                    return;
+                }
+                if (target != fileTree.getSelectionModel().getSelectedItem()) {
+                    fileTree.getSelectionModel().select(target);
+                } else {
+                    openTreeNote(target);
+                }
+            }
+        });
+
+        calendarView.setOnDayClicked(this::openDailyNote);
+
         SplitPane split = new SplitPane();
         split.setOrientation(Orientation.HORIZONTAL);
-        split.getItems().addAll(fileTree, editor);
-        split.setDividerPositions(0.28);
-        SplitPane.setResizableWithParent(fileTree, Boolean.TRUE);
+        split.getItems().addAll(treeTabPane, editor);
+        split.setDividerPositions(0.20);
+        SplitPane.setResizableWithParent(treeTabPane, Boolean.TRUE);
         return split;
+    }
+
+    private void distributeTabWidths(TabPane tabPane) {
+        Runnable apply = () -> {
+            Set<Node> tabs = tabPane.lookupAll(".tab");
+            double width = tabPane.getWidth();
+            if (tabs.isEmpty() || width <= 0) {
+                return;
+            }
+            double tabWidth = width / tabs.size();
+            tabs.forEach(tab -> ((Region) tab).setPrefWidth(tabWidth));
+        };
+        tabPane.widthProperty().addListener((obs, oldWidth, newWidth) -> apply.run());
+        Platform.runLater(apply);
+    }
+
+    private String dailyNoteFileName(LocalDate date) {
+        return DAILY_NOTE_FILE_FORMAT.format(date) + ".html";
+    }
+
+    private void saveCurrentEditorContent() {
+        if (editor == null || editorSource == EditorSource.NONE) {
+            return;
+        }
+        String html = editor.getHtmlText();
+        switch (editorSource) {
+            case TREE_ITEM -> {
+                if (currentTreeItemData != null) {
+                    fileSystemManager.saveTreeItem(currentTreeItemData.getFileName(), html);
+                }
+            }
+            case DAILY_NOTE -> {
+                if (currentDailyNoteDate != null) {
+                    fileSystemManager.saveTreeItem(dailyNoteFileName(currentDailyNoteDate), html);
+                }
+            }
+            default -> { }
+        }
+    }
+
+    private void openTreeNote(TreeItem<TreeItemData> item) {
+        saveCurrentEditorContent();
+        TreeItemData data = item.getValue();
+        if (data == null) {
+            editorSource = EditorSource.NONE;
+            return;
+        }
+        statusLabel.setText(" Selected: %s   >>   FileName: %s".formatted(
+                data.getNodeName(),
+                data.getFileName()));
+        editor.setHtmlText(fileSystemManager.loadData(data.getFileName()));
+        currentTreeItemData = data;
+        currentDailyNoteDate = null;
+        editorSource = EditorSource.TREE_ITEM;
+    }
+
+    private void openDailyNote(LocalDate date) {
+        saveCurrentEditorContent();
+        String fileName = dailyNoteFileName(date);
+        String html = fileSystemManager.fileExists(fileName)
+                ? fileSystemManager.loadData(fileName)
+                : "";
+        editor.setHtmlText(html);
+        statusLabel.setText(" Daily note: %s".formatted(fileName));
+        currentDailyNoteDate = date;
+        currentTreeItemData = null;
+        editorSource = EditorSource.DAILY_NOTE;
     }
 
     private TreeItem<TreeItemData> toTreeItem(TreeHierarchyData node) {
@@ -316,6 +420,11 @@ public class TreeNotesApp extends Application  {
 
     @Override
     public void stop() {
+        try {
+            saveCurrentEditorContent();
+        } catch (Exception ignored) {
+            // Best effort on shutdown; never block exit.
+        }
         Platform.exit();
     }
 
