@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -54,6 +55,7 @@ public class TreeNotesApp extends Application  {
     private TreeItemData currentTreeItemData;
     private LocalDate currentDailyNoteDate;
     private CalendarView calendarView;
+    private Stage primaryStage;
 
     public TreeNotesApp() {
         this.fileSystemManager = new FileSystemManager(config);
@@ -61,6 +63,7 @@ public class TreeNotesApp extends Application  {
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         BorderPane root = new BorderPane();
         root.setTop(buildToolbar(primaryStage));
         root.setCenter(buildSplitPane(primaryStage));
@@ -102,9 +105,18 @@ public class TreeNotesApp extends Application  {
         fileMenu.getItems().add(exitMenuItem);
 
         MenuItem aboutMenuItem = new MenuItem("About");
-//        aboutMenuItem.addActionListener(e -> {
-//            showAboutDialog(TreeNotesApp.this);
-//        });
+        aboutMenuItem.setOnAction(event -> {
+            Dialogs.showDialog(
+                Alert.AlertType.INFORMATION,
+                "About ArboNotes",
+                "ArboNotes v1.0-SNAPSHOT\n\n"
+                    + "A hierarchical note-taking application with\n"
+                    + "rich text editing and calendar view.\n\n"
+                    + "Built with JavaFX " + System.getProperty("javafx.version", "25") + "\n"
+                    + "Java " + System.getProperty("java.version"),
+                    primaryStage
+            );
+        });
         Menu helpMenu = new Menu("Help");
         helpMenu.getItems().add(aboutMenuItem);
 

@@ -4,7 +4,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Screen;
 import javafx.stage.StageStyle;
@@ -14,11 +13,22 @@ import java.util.Optional;
 
 public class Dialogs {
 
-    public static void showDialog(String title, String message, Alert.AlertType type) {
+    public static void showDialog(Alert.AlertType type, String title, String message, Window owner) {
         Alert alert = new Alert(type);
+
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
+
         alert.initStyle(StageStyle.UTILITY);
+        alert.setTitle(title);
         alert.setHeaderText(title);
         alert.setContentText(message);
+
+        alert.setOnShown(e -> {
+            Window window = alert.getDialogPane().getScene().getWindow();
+            center(window, owner);
+        });
 
         alert.showAndWait();
     }
