@@ -228,7 +228,7 @@ public class TreeNotesApp extends Application  {
             });
 
             // Create the ContextMenu
-            TreeContextMenu contextMenu = new TreeContextMenu(fileSystemManager, cell);
+            TreeContextMenu contextMenu = new TreeContextMenu(fileSystemManager, cell, editor);
 
             // Bind context menu to cell, but only display it if the cell is not empty
             cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {

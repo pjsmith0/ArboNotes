@@ -42,4 +42,22 @@ public class Utils {
         return name;
     }
 
+    public static String wrapInH1(String string) {
+        return "<h1>%s</h1>".formatted(capitalizeFirstChar(string));
+    }
+
+    public static String capitalizeFirstChar(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+
+        char first = str.charAt(0);
+
+        if (Character.isLowerCase(first)) {
+            return Character.toUpperCase(first) + str.substring(1);
+        }
+
+        return str;
+    }
+
 }

@@ -15,10 +15,12 @@ public class TreeContextMenu extends ContextMenu {
 
     private final FileSystemManager fileSystemManager;
     private final TreeCell<TreeItemData> cell;
+    private final WebRichTextEditor editor;
 
-    public TreeContextMenu(FileSystemManager fileSystemManager, TreeCell<TreeItemData> cell) {
+    public TreeContextMenu(FileSystemManager fileSystemManager, TreeCell<TreeItemData> cell, WebRichTextEditor editor) {
         this.fileSystemManager = fileSystemManager;
         this.cell = cell;
+        this.editor = editor;
 
         initialize();
     }
@@ -52,6 +54,8 @@ public class TreeContextMenu extends ContextMenu {
                 newTreeItem.getParent().setExpanded(true);
                 int row = cell.getTreeView().getRow(newTreeItem);
                 msm.select(row);
+
+                editor.setHtmlText(Utils.wrapInH1(rawTreeItemName));
             }
         });
         this.getItems().add(create);
