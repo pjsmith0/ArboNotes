@@ -6,9 +6,11 @@ import java.time.Month;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.time.temporal.WeekFields;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
+import com.pjs.util.FileSystemManager;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
@@ -22,12 +24,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
+import lombok.Setter;
 
 public class CalendarView extends VBox {
 
-    private final ObjectProperty<LocalDate> selectedDate =
-            new SimpleObjectProperty<>(this, "selectedDate", LocalDate.now());
+    private final ObjectProperty<LocalDate> selectedDate = new SimpleObjectProperty<>(
+            this, "selectedDate", LocalDate.now());
 
+    @Setter
     private Consumer<LocalDate> onDayClicked;
 
     private final Locale locale = Locale.getDefault();
@@ -35,10 +39,12 @@ public class CalendarView extends VBox {
     private final Label titleLabel = new Label();
     private final GridPane weekdayRow = new GridPane();
     private final GridPane dayGrid = new GridPane();
+    private final FileSystemManager fileSystemManager;
 
     private YearMonth displayedMonth;
 
-    public CalendarView() {
+    public CalendarView(FileSystemManager fileSystemManager) {
+        this.fileSystemManager = fileSystemManager;
         this.displayedMonth = YearMonth.from(selectedDate.get());
 
         getStyleClass().add("calendar-view");
@@ -46,30 +52,6 @@ public class CalendarView extends VBox {
 
         getChildren().addAll(buildHeader(), buildWeekdayRow(), buildDayGrid());
         refresh();
-    }
-
-    public ObjectProperty<LocalDate> selectedDateProperty() {
-        return selectedDate;
-    }
-
-    public LocalDate getSelectedDate() {
-        return selectedDate.get();
-    }
-
-    public void setSelectedDate(LocalDate date) {
-        selectedDate.set(date);
-        if (date == null) {
-            refresh();
-            return;
-        }
-        if (!YearMonth.from(date).equals(displayedMonth)) {
-            displayedMonth = YearMonth.from(date);
-        }
-        refresh();
-    }
-
-    public void setOnDayClicked(Consumer<LocalDate> callback) {
-        this.onDayClicked = callback;
     }
 
     private Node buildHeader() {
@@ -166,6 +148,8 @@ public class CalendarView extends VBox {
     }
 
     private void refreshDays() {
+        List<LocalDate> datesWithNotesList = fileSystemManager.getDatesWithFiles(displayedMonth);
+
         dayGrid.getChildren().clear();
 
         LocalDate firstOfMonth = displayedMonth.atDay(1);
@@ -193,6 +177,9 @@ public class CalendarView extends VBox {
                 }
                 if (date.equals(selected)) {
                     cell.getStyleClass().add("calendar-day-selected");
+                }
+                if (datesWithNotesList.contains(date)) {
+                    cell.getStyleClass().add("calendar-day-with-note");
                 }
 
                 cell.setOnMouseClicked(e -> {

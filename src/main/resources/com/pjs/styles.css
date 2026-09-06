@@ -176,3 +176,7 @@
     -fx-text-fill: white;
     -fx-font-weight: bold;
 }
+
+.calendar-day-with-note {
+    -fx-text-fill: #e67e22;
+}

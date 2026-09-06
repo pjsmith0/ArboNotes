@@ -19,11 +19,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class FileSystemManager {
+
+    private static final Pattern DATE_EXTRACTION_PATTERN = Pattern.compile("^(\\d{8})\\.html$", Pattern.CASE_INSENSITIVE);
 
     private final ObjectMapper mapper;
     private final Config config;
@@ -135,4 +143,35 @@ public class FileSystemManager {
                 .toList();
     }
 
+    @SneakyThrows
+    public List<LocalDate> getDatesWithFiles(YearMonth displayedMonth) {
+        try (Stream<Path> paths = Files.walk(Paths.get(config.getRootPath()))) {
+            return paths
+                    .map(FileSystemManager::extractDate)
+                    .filter(Objects::nonNull)
+                    .filter(dateWithNote ->
+                            dateWithNote.getYear() == displayedMonth.getYear() &&
+                                    dateWithNote.getMonth() == displayedMonth.getMonth())
+                    .toList();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private static LocalDate extractDate(Path p) {
+        String fileName = p.getFileName().toString();
+        Matcher matcher = DATE_EXTRACTION_PATTERN.matcher(fileName);
+
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        String dateString = matcher.group(1);
+        return LocalDate.parse(
+                dateString,
+                DateTimeFormatter.ofPattern("yyyyMMdd")
+        );
+    }
 }

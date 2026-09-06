@@ -271,7 +271,7 @@ public class TreeNotesApp extends Application  {
         editor = new WebRichTextEditor();
         editor.setPrefWidth(760);
 
-        calendarView = new CalendarView();
+        calendarView = new CalendarView(fileSystemManager);
         calendarView.setMaxHeight(Region.USE_PREF_SIZE);
         calendarView.setOnDayClicked(this::openDailyNote);
 
