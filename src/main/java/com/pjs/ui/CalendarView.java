@@ -17,6 +17,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -24,6 +25,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
+import lombok.Getter;
 import lombok.Setter;
 
 public class CalendarView extends VBox {
@@ -31,6 +33,7 @@ public class CalendarView extends VBox {
     private final ObjectProperty<LocalDate> selectedDate = new SimpleObjectProperty<>(
             this, "selectedDate", LocalDate.now());
 
+    @Getter
     @Setter
     private Consumer<LocalDate> onDayClicked;
 
@@ -41,6 +44,7 @@ public class CalendarView extends VBox {
     private final GridPane dayGrid = new GridPane();
     private final FileSystemManager fileSystemManager;
 
+    private boolean refreshing = false;
     private YearMonth displayedMonth;
 
     public CalendarView(FileSystemManager fileSystemManager) {
@@ -136,9 +140,15 @@ public class CalendarView extends VBox {
         refresh();
     }
 
-    private void refresh() {
-        refreshTitle();
-        refreshDays();
+    public void refresh() {
+        if (refreshing) return;
+        refreshing = true;
+        try {
+            refreshTitle();
+            refreshDays();
+        } finally {
+            refreshing = false;
+        }
     }
 
     private void refreshTitle() {
@@ -183,10 +193,23 @@ public class CalendarView extends VBox {
                 }
 
                 cell.setOnMouseClicked(e -> {
+                    if (e.getButton() != MouseButton.PRIMARY) {
+                        return;
+                    }
                     selectedDate.set(date);
+                    cell.requestFocus();
                     refreshDays();
                     if (onDayClicked != null) {
                         onDayClicked.accept(date);
+                    }
+                });
+
+                cell.setContextMenu(new CalendarContextMenu(fileSystemManager, this, date));
+
+                cell.setFocusTraversable(true);
+                cell.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                    if (wasFocused && !isFocused) {
+                        refresh();
                     }
                 });
 

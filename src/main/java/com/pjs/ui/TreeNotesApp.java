@@ -297,6 +297,9 @@ public class TreeNotesApp extends Application  {
             return;
         }
         String html = editor.getHtmlText();
+        if (html.replaceAll("<[^>]*>", "").trim().isEmpty()) {
+            return;
+        }
         switch (editorSource) {
             case TREE_ITEM -> {
                 if (currentTreeItemData != null) {
