@@ -1,4 +1,4 @@
-name: Build JavaFX Uber Jar
+name: Build Rust executables
 
 on:
   push:
@@ -7,16 +7,31 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# A new push to the same branch/PR cancels the previous run.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   build:
+    name: Build (${{ matrix.platform }})
     strategy:
+      # Keep building the other platform if one fails.
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             platform: linux
+            archive: ArboNotes-linux-x86_64.tar.gz
           - os: windows-latest
-            platform: win
+            platform: windows
+            archive: ArboNotes-windows-x86_64.zip
 
     runs-on: ${{ matrix.os }}
 
@@ -24,29 +39,61 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
+      # Tauri 2 needs WebKitGTK and the usual GTK/WebKit build headers on
+      # Linux. Windows uses WebView2, which is already available on the
+      # hosted runners, so no extra packages are required there.
+      - name: Install Tauri dependencies (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'maven'
+          components: rustfmt
 
-      # No os-maven-plugin / classifier needed — org.openjfx's own parent
-      # POM uses Maven's built-in OS-family profile activation, so a plain
-      # `mvn package` on each runner resolves that runner's native JavaFX
-      # libs automatically.
-      - name: Build uber jar
-        run: mvn -B clean package
+      - name: Cache Cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.platform }}
 
-      - name: Stage uber jar
-        shell: bash
+      - name: Check formatting
+        if: matrix.platform == 'linux'
+        run: cargo fmt --check
+
+      - name: Run tests
+        run: cargo test --locked
+
+      - name: Build release executable
+        run: cargo build --release --locked
+
+      # tar.gz keeps the executable permission bit, which zip would drop.
+      - name: Stage executable (Linux)
+        if: matrix.platform == 'linux'
         run: |
           mkdir -p dist
-          cp target/ArboNotes-*-all.jar dist/ArboNotes-${{ matrix.platform }}.jar
+          tar -czf "dist/${{ matrix.archive }}" -C target/release arbonotes
 
-      - name: Upload uber jar
+      - name: Stage executable (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path target/release/arbonotes.exe -DestinationPath "dist/${{ matrix.archive }}"
+
+      - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
           name: ArboNotes-${{ matrix.platform }}
-          path: dist/ArboNotes-${{ matrix.platform }}.jar
+          path: dist/${{ matrix.archive }}
           if-no-files-found: error

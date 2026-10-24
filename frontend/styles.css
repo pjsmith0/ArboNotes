@@ -1,0 +1,675 @@
+/* ===== Application-wide ===== */
+:root {
+    --accent: #0078d7;
+    --accent-soft: rgba(0, 120, 215, 0.08);
+    --accent-medium: rgba(0, 120, 215, 0.14);
+    --border: #e1e1e1;
+    --panel: #fafafa;
+    --bar: #f3f3f3;
+    --text: #242424;
+    --text-muted: #5a5a5a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    background: #ffffff;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ===== Menu bar & menus ===== */
+#menu-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    min-height: 30px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+}
+
+.menu {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.menu-title {
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: default;
+}
+
+.menu-title:hover,
+.menu.open .menu-title,
+.menu-title:focus-visible {
+    background: rgba(0, 120, 215, 0.12);
+    outline: none;
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 900;
+    min-width: 160px;
+    padding: 4px;
+    background: #ffffff;
+    border: 1px solid #d5d5d5;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.menu.open .menu-dropdown {
+    display: block;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    padding: 6px 10px;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+    background: rgba(0, 120, 215, 0.12);
+    color: #101418;
+    outline: none;
+}
+
+.menu-item:disabled {
+    color: #a0a0a0;
+    background: transparent;
+}
+
+/* ===== Workspace / split panes ===== */
+#workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+#left-panel {
+    flex: 0 0 20%;
+    min-width: 170px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#tree-pane {
+    flex: 0 0 65%;
+    min-height: 70px;
+    display: flex;
+    overflow: hidden;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+}
+
+#tree-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 2px 0;
+}
+
+#calendar-pane {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+}
+
+.splitter {
+    flex: 0 0 auto;
+    background: var(--border);
+    position: relative;
+    z-index: 5;
+}
+
+.splitter-vertical {
+    width: 5px;
+    cursor: col-resize;
+}
+
+.splitter-horizontal {
+    height: 5px;
+    cursor: row-resize;
+}
+
+.splitter:hover,
+body.dragging-splitter .splitter {
+    background: var(--accent);
+}
+
+#editor-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+}
+
+#editor-shell {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ===== Tree ===== */
+.tree,
+.tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tree ul {
+    padding-left: 16px;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    border-left: 3px solid transparent;
+    color: var(--text);
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.tree-row:hover {
+    background: var(--accent-soft);
+}
+
+.tree-row.selected {
+    background: var(--accent-medium);
+    color: #101418;
+    border-left-color: var(--accent);
+}
+
+.tree-row.drag-over {
+    background: rgba(0, 120, 215, 0.12);
+    border-left-color: rgba(0, 120, 215, 0.8);
+}
+
+.tree-row.drag-over-edge {
+    background: transparent;
+    box-shadow: inset 0 2px 0 rgba(0, 120, 215, 0.9),
+                inset 0 -2px 0 rgba(0, 120, 215, 0.9);
+}
+
+.tree-twisty {
+    flex: 0 0 14px;
+    width: 14px;
+    text-align: center;
+    color: #6b6b6b;
+    font-size: 10px;
+    line-height: 1;
+    cursor: default;
+}
+
+.tree-twisty.empty {
+    visibility: hidden;
+}
+
+.tree-label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== Status bar ===== */
+#status-bar {
+    flex: 0 0 auto;
+    background: var(--bar);
+    border-top: 1px solid var(--border);
+    padding: 4px 8px;
+}
+
+#status-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* ===== Calendar ===== */
+.calendar-view {
+    height: 100%;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+}
+
+.calendar-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.calendar-nav-left {
+    justify-content: flex-start;
+}
+
+.calendar-nav-right {
+    justify-content: flex-end;
+}
+
+.calendar-nav-button {
+    background: transparent;
+    border: 1px solid #d5d5d5;
+    border-radius: 4px;
+    color: var(--text);
+    padding: 2px 5px;
+    cursor: default;
+    line-height: 1.2;
+    font-size: 11px;
+}
+
+.calendar-nav-button:hover {
+    background: rgba(0, 120, 215, 0.12);
+}
+
+.calendar-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12.5px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1px;
+}
+
+.calendar-weekdays {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+}
+
+.calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 18px;
+    border-radius: 4px;
+    color: var(--text);
+    cursor: default;
+    user-select: none;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: var(--accent-soft);
+}
+
+.calendar-day-other {
+    color: #b8b8b8;
+}
+
+.calendar-day-today {
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+    font-weight: bold;
+}
+
+.calendar-day-selected {
+    background: var(--accent);
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.calendar-day-with-note {
+    color: #e67e22;
+}
+
+.calendar-day-selected.calendar-day-with-note {
+    color: #ffffff;
+}
+
+/* ===== Context menu ===== */
+.context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 150px;
+    padding: 4px;
+    background: #ffffff;
+    border: 1px solid #d5d5d5;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    user-select: none;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu .menu-item {
+    padding: 6px 10px;
+}
+
+.context-menu .menu-separator {
+    height: 1px;
+    margin: 4px 6px;
+    background: #e5e5e5;
+}
+
+/* ===== Modal dialogs ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-dialog {
+    width: min(440px, calc(100vw - 48px));
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    background: #ffffff;
+    border: 1px solid #d5d5d5;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+    padding: 18px;
+}
+
+.modal-title {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #101418;
+    white-space: pre-wrap;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--text);
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.modal-body input[type="text"] {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #c8c8c8;
+    border-radius: 4px;
+    outline: none;
+}
+
+.modal-body input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 120, 215, 0.15);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.modal-button {
+    min-width: 74px;
+    padding: 6px 12px;
+    border: 1px solid #c8c8c8;
+    border-radius: 4px;
+    background: #ffffff;
+    color: var(--text);
+    cursor: default;
+}
+
+.modal-button:hover,
+.modal-button:focus-visible {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    outline: none;
+}
+
+.modal-button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.modal-button.primary:hover,
+.modal-button.primary:focus-visible {
+    background: #0066b8;
+}
+
+/* ===== Search dialog ===== */
+.search-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-box input[type="text"] {
+    flex: 1 1 auto;
+}
+
+.search-results {
+    min-height: 150px;
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid #d5d5d5;
+    border-radius: 4px;
+    background: #ffffff;
+    padding: 2px;
+}
+
+.search-result {
+    padding: 5px 8px;
+    border-radius: 3px;
+    cursor: default;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-result:hover {
+    background: var(--accent-soft);
+}
+
+.search-result.selected {
+    background: var(--accent-medium);
+}
+
+.search-empty {
+    color: #9a9a9a;
+    padding: 8px;
+}
+
+/* ===== Editor ===== */
+#toolbar {
+    flex: 0 0 auto;
+    border: none;
+    border-bottom: 1px solid #d5d5d5;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding: 6px 8px;
+}
+
+#editor-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 8px 8px 8px;
+}
+
+.ql-container.ql-snow {
+    border: none;
+    font-size: 14px;
+}
+
+/* ---- Content typography (kept in sync with the JavaFX editor) ---- */
+.ql-editor {
+    line-height: 1.55;
+    color: #24292f;
+}
+
+.ql-editor a {
+    color: #0065b3;
+}
+
+.ql-editor a:hover {
+    text-decoration: underline;
+}
+
+.ql-editor.ql-blank::before {
+    color: #9aa4ad;
+    font-style: italic;
+}
+
+.ql-editor blockquote {
+    margin: 1.5rem 0;
+    padding: 0.5rem 1rem 0.5rem 1.25rem;
+    border-left: 4px solid #0078d7;
+    background-color: rgba(0, 120, 215, 0.06);
+    color: rgb(27 30 36 / 0.6);
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    border-radius: 0 4px 4px 0;
+}
+
+.ql-editor blockquote blockquote {
+    border-left-color: #005a9e;
+    background-color: #dfeefa;
+}
+
+.ql-snow .ql-editor .ql-code-block-container {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background-color: #eeeeee;
+    color: #24292f;
+    border-left: 4px solid #d9dbde;
+    border-radius: 0 6px 6px 0;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.ql-editor code {
+    background-color: #f0f1f3;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: "Consolas", "DejaVu Sans Mono", monospace;
+    color: #c7254e;
+}
+
+.ql-editor table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.ql-editor table td {
+    border: 1px solid #c8c8c8;
+    padding: 6px 8px;
+    outline: none;
+}
+
+/* Table toolbar buttons */
+.ql-snow.ql-toolbar button.ql-table,
+.ql-snow.ql-toolbar button.ql-table-row-above,
+.ql-snow.ql-toolbar button.ql-table-row-below,
+.ql-snow.ql-toolbar button.ql-table-col-left,
+.ql-snow.ql-toolbar button.ql-table-col-right,
+.ql-snow.ql-toolbar button.ql-table-delete-row,
+.ql-snow.ql-toolbar button.ql-table-delete-col,
+.ql-snow.ql-toolbar button.ql-table-delete {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+}
+
+.ql-snow.ql-toolbar button.ql-table { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M6%206h4v4H6z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-row-above { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v4H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-row-below { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%2010h12v4H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-col-left { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h4v12H2z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-col-right { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M10%202h4v12H10z%22%20fill%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-delete-row { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M2%206l12%204M14%206L2%2010%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-delete-col { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M2%202h12v12H2z%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202v12M10%202v12M2%206h12M2%2010h12%22%20fill%3D%22none%22%20stroke%3D%22%23444%22%2F%3E%3Cpath%20d%3D%22M6%202l4%2012M10%202L6%2014%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E"); }
+.ql-snow.ql-toolbar button.ql-table-delete { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20d%3D%22M3%204.5h10l-.8%209.5H3.8z%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%2F%3E%3Cpath%20d%3D%22M2.5%204.5h11M6%204.5l.6-1.5h2.8l.6%201.5%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%2F%3E%3Cpath%20d%3D%22M6.8%207.5v3.5M9.2%207.5v3.5%22%20fill%3D%22none%22%20stroke%3D%22%23c0392b%22%20stroke-width%3D%221.2%22%2F%3E%3C%2Fsvg%3E"); }

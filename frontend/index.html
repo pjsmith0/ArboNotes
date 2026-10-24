@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArboNotes</title>
+<link rel="stylesheet" href="quill/quill.snow.css">
+<link rel="stylesheet" href="highlight/styles/stackoverflow-light.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+    <nav id="menu-bar" aria-label="Main menu">
+        <div class="menu" data-menu="file">
+            <button type="button" class="menu-title">File</button>
+            <div class="menu-dropdown">
+                <button type="button" class="menu-item" id="menu-exit">Exit</button>
+            </div>
+        </div>
+        <div class="menu" data-menu="help">
+            <button type="button" class="menu-title">Help</button>
+            <div class="menu-dropdown">
+                <button type="button" class="menu-item" id="menu-about">About</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="workspace">
+        <section id="left-panel">
+            <div id="tree-pane" class="pane">
+                <div id="tree-scroll">
+                    <ul id="tree" class="tree" role="tree" aria-label="Notes"></ul>
+                </div>
+            </div>
+
+            <div id="left-splitter" class="splitter splitter-horizontal" role="separator" aria-orientation="horizontal" title="Drag to resize"></div>
+
+            <div id="calendar-pane" class="pane">
+                <div id="calendar" class="calendar-view">
+                    <div class="calendar-header">
+                        <div class="calendar-nav-group calendar-nav-left">
+                            <button type="button" id="cal-prev-year" class="calendar-nav-button" title="Previous year">&#171;</button>
+                            <button type="button" id="cal-prev-month" class="calendar-nav-button" title="Previous month">&#8249;</button>
+                        </div>
+                        <div id="calendar-title" class="calendar-title"></div>
+                        <div class="calendar-nav-group calendar-nav-right">
+                            <button type="button" id="cal-next-month" class="calendar-nav-button" title="Next month">&#8250;</button>
+                            <button type="button" id="cal-next-year" class="calendar-nav-button" title="Next year">&#187;</button>
+                            <button type="button" id="cal-today" class="calendar-nav-button" title="Go to today">Today</button>
+                        </div>
+                    </div>
+                    <div id="calendar-weekdays" class="calendar-weekdays"></div>
+                    <div id="calendar-grid" class="calendar-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="main-splitter" class="splitter splitter-vertical" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
+
+        <section id="editor-pane">
+            <div id="editor-shell">
+                <div id="toolbar">
+                    <span class="ql-formats">
+                        <select class="ql-header">
+                            <option value="1">Heading 1</option>
+                            <option value="2">Heading 2</option>
+                            <option value="3">Heading 3</option>
+                            <option selected></option>
+                            <option value="pre">Preformatted</option>
+                        </select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" title="Bold"></button>
+                        <button class="ql-italic" title="Italic"></button>
+                        <button class="ql-underline" title="Underline"></button>
+                        <button class="ql-strike" title="Strikethrough"></button>
+                        <select class="ql-color" title="Text color">
+                            <option value="red"></option>
+                            <option value="green"></option>
+                            <option value="blue"></option>
+                            <option value="orange"></option>
+                            <option value="violet"></option>
+                            <option value="#d0d1d2"></option>
+                            <option selected></option>
+                        </select>
+                        <select class="ql-background" title="Highlight color">
+                            <option value="red"></option>
+                            <option value="green"></option>
+                            <option value="blue"></option>
+                            <option value="orange"></option>
+                            <option value="violet"></option>
+                            <option value="#d0d1d2"></option>
+                            <option selected></option>
+                        </select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-align" value=""></button>
+                        <button class="ql-align" value="center" title="Align center"></button>
+                        <button class="ql-align" value="right" title="Align right"></button>
+                        <button class="ql-align" value="justify" title="Align justify"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-list" value="ordered" title="Numbered list"></button>
+                        <button class="ql-list" value="bullet" title="Bulleted list"></button>
+                        <button class="ql-indent" value="-1" title="Decrease indent"></button>
+                        <button class="ql-indent" value="+1" title="Increase indent"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-blockquote" title="Blockquote"></button>
+                        <button class="ql-code-block" title="Code block"></button>
+                        <button class="ql-link" title="Insert link"></button>
+                        <button class="ql-clean" title="Remove formatting"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-table" value="insert-table" title="Insert table"></button>
+                        <button class="ql-table-row-above" value="1" title="Insert row above"></button>
+                        <button class="ql-table-row-below" value="1" title="Insert row below"></button>
+                        <button class="ql-table-col-left" value="1" title="Insert column left"></button>
+                        <button class="ql-table-col-right" value="1" title="Insert column right"></button>
+                        <button class="ql-table-delete-row" value="1" title="Delete row"></button>
+                        <button class="ql-table-delete-col" value="1" title="Delete column"></button>
+                        <button class="ql-table-delete" value="1" title="Delete table"></button>
+                    </span>
+                </div>
+                <div id="editor-container"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="status-bar">
+        <span id="status-label">No file open</span>
+    </footer>
+</div>
+
+<div id="context-menu" class="context-menu hidden" role="menu"></div>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-dialog" role="dialog" aria-modal="true">
+        <h2 id="modal-title" class="modal-title"></h2>
+        <div id="modal-body" class="modal-body"></div>
+        <div id="modal-buttons" class="modal-buttons"></div>
+    </div>
+</div>
+
+<script src="highlight/highlight.min.js"></script>
+<script src="quill/quill.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
