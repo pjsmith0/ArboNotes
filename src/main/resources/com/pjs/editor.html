@@ -328,17 +328,27 @@
         return div.innerHTML;
     }
 
+    /* Clipboard shortcuts (Ctrl+C/X/V) are handled on the Java side, see
+       WebRichTextEditor. Only take them over while Quill itself has focus, so
+       native copy/paste keeps working in e.g. the link tooltip's input, and
+       never while an IME composition is in progress. */
+    function isEditorFocused() {
+        return quill.hasFocus() && !quill.selection.composing;
+    }
+
     function deleteRange(index, length) {
         quill.deleteText(index, length, 'user');
     }
 
-    function pasteHtml(index, html) {
+    function pasteHtml(index, length, html) {
         quill.focus();
+        if (length > 0) quill.deleteText(index, length, 'user');
         quill.clipboard.dangerouslyPasteHTML(index, html, 'user');
     }
 
-    function pasteText(index, text) {
+    function pasteText(index, length, text) {
         quill.focus();
+        if (length > 0) quill.deleteText(index, length, 'user');
         quill.insertText(index, text, 'user');
         quill.setSelection(index + text.length, 0, 'silent');
     }
@@ -347,24 +357,28 @@
        GDK_KEY_KP_Enter, so WebView delivers a keydown stripped of identity
        ("key"/"code" empty, location STANDARD — never "NumpadEnter"/location 3)
        and no newline is inserted. WebRichTextEditor detects that case on the
-       Java side (KEY_PRESSED + KeyCode.ENTER + empty character) and calls this.
-       Inserting '\n' inherits the current line formats, so lists/quotes/code
-       blocks continue like a normal Enter. */
-    // window.insertNumpadEnter = function () {
-    //     var range = quill.getSelection(true);
-    //     if (!range) return;
-    //     quill.insertText(range.index, range.length || 0, '\n', 'user');
-    // };
-
-    // window.addEventListener('keydown', function(e) {
-    //     // Check if the physical key is specifically the Numpad Enter
-    //     if (e.code === 'NumpadEnter') {
-    //         //window.insertNumpadEnter();
-    //         e.preventDefault(); // Prevents default behavior in the browser
-    //         e.stopPropagation(); // Stops it from bubbling up
-    //
-    //     }
-    // });
+       Java side (KEY_PRESSED + KeyCode.ENTER + empty text) and calls this.
+       Re-dispatching a synthetic Enter lets Quill's keyboard pipeline run as
+       usual, so lists, blockquotes and code blocks continue like a normal
+       Enter. Targeting the active element also keeps the link tooltip's
+       input working. */
+    window.insertNumpadEnter = function (shiftKey, ctrlKey, altKey, metaKey) {
+        var target = document.activeElement;
+        if (!target || typeof target.dispatchEvent !== 'function') {
+            target = quill.root;
+        }
+        target.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            location: 0,
+            bubbles: true,
+            cancelable: true,
+            shiftKey: !!shiftKey,
+            ctrlKey: !!ctrlKey,
+            altKey: !!altKey,
+            metaKey: !!metaKey
+        }));
+    };
 </script>
 </body>
 </html>

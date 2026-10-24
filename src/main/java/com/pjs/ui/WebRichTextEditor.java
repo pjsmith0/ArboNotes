@@ -7,6 +7,8 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -24,6 +26,8 @@ import javafx.scene.web.WebView;
 public class WebRichTextEditor extends Region {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final boolean IS_LINUX =
+            System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).startsWith("linux");
 
     private final WebView webView = new WebView();
     private final WebEngine engine = webView.getEngine();
@@ -49,6 +53,24 @@ public class WebRichTextEditor extends Region {
         webView.prefHeightProperty().bind(heightProperty());
         webView.setContextMenuEnabled(false);
         getChildren().add(webView);
+
+        // On Linux the GTK backend reports the numeric keypad's Enter key as
+        // KeyCode.ENTER with no text (the main Enter key carries "\r"), and
+        // delivers no character, so Quill's keydown handler never sees it.
+        // Replay those presses through the page, which dispatches a synthetic
+        // Enter into Quill's own keyboard pipeline.
+        webView.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            String text = e.getText();
+            if (IS_LINUX && e.getCode() == KeyCode.ENTER
+                    && (text == null || text.isEmpty())) {
+                e.consume();
+                execJs("window.insertNumpadEnter(" + e.isShiftDown() + ", "
+                        + e.isControlDown() + ", " + e.isAltDown() + ", "
+                        + e.isMetaDown() + ")");
+                return;
+            }
+            handleClipboardShortcut(e);
+        });
 
         cutItem.setOnAction(e -> copyToSystemClipboard(true));
         copyItem.setOnAction(e -> copyToSystemClipboard(false));
@@ -101,9 +123,48 @@ public class WebRichTextEditor extends Region {
     }
 
     /**
+     * Handles Ctrl+C / Ctrl+X / Ctrl+V (Cmd on macOS) inside the Quill editor.
+     * WebView's built-in clipboard integration is unreliable here, so these
+     * shortcuts go through the same manual system-clipboard path as the
+     * context menu. When focus is elsewhere (e.g. the link tooltip's input)
+     * the event is left untouched so native text-field behaviour still works.
+     */
+    private void handleClipboardShortcut(KeyEvent event) {
+        KeyCode code = event.getCode();
+        if (code != KeyCode.C && code != KeyCode.X && code != KeyCode.V) {
+            return;
+        }
+        if (!event.isShortcutDown() || event.isAltDown() || !isEditorFocused()) {
+            return;
+        }
+        switch (code) {
+            case C -> {
+                cacheSelectionState();
+                copyToSystemClipboard(false);
+            }
+            case X -> {
+                cacheSelectionState();
+                copyToSystemClipboard(true);
+            }
+            case V -> {
+                cacheSelectionState();
+                pasteFromSystemClipboard();
+            }
+            default -> {
+                return;
+            }
+        }
+        event.consume();
+    }
+
+    private boolean isEditorFocused() {
+        return Boolean.TRUE.equals(evalJs("window.isEditorFocused()"));
+    }
+
+    /**
      * Reads the current Quill selection and the selected plain-text/HTML
      * content from the page. Must run while the WebView still has focus
-     * (i.e. before the context menu popup is shown).
+     * (i.e. before the context menu popup is shown or a shortcut is handled).
      */
     private void cacheSelectionState() {
         cachedIndex = null;
@@ -159,24 +220,32 @@ public class WebRichTextEditor extends Region {
             return;
         }
         int index = cachedIndex;
+        int length = cachedLength;
         cachedIndex = null;
         Clipboard systemClipboard = Clipboard.getSystemClipboard();
         String html = systemClipboard.hasHtml() ? systemClipboard.getHtml() : null;
         if (html != null && !html.isBlank()) {
-            execJs("window.pasteHtml(" + index + "," + toJsStringLiteral(html) + ")");
+            execJs("window.pasteHtml(" + index + "," + length + ","
+                    + toJsStringLiteral(html) + ")");
         } else if (systemClipboard.hasString()) {
-            execJs("window.pasteText(" + index + "," + toJsStringLiteral(systemClipboard.getString()) + ")");
+            execJs("window.pasteText(" + index + "," + length + ","
+                    + toJsStringLiteral(systemClipboard.getString()) + ")");
         }
     }
 
     private void execJs(String script) {
+        evalJs(script);
+    }
+
+    private Object evalJs(String script) {
         if (!loaded) {
-            return;
+            return null;
         }
         try {
-            engine.executeScript(script);
+            return engine.executeScript(script);
         } catch (Exception e) {
             System.err.println("Editor script failed: " + e.getMessage());
+            return null;
         }
     }
 
