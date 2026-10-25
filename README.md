@@ -115,8 +115,7 @@ By default, data is stored in:
 └── yyyyMMdd.html      # daily notes
 ```
 
-This is the same layout used by the Java application, and `tree.json` keeps the
-same shape:
+Example `tree.json` shape:
 
 ```json
 {
@@ -136,17 +135,7 @@ ARBONOTES_ROOT=/path/to/data cargo run
 ```
 
 If the directory or `tree.json` does not exist, ArboNotes creates them on
-startup. The Java version exits in that case.
-
-## Differences from the Java version
-
-- Data directory and default tree are created automatically.
-- Note file names are validated; paths outside the data directory are rejected.
-- Search results are de-duplicated.
-- The root node cannot be deleted.
-- Right-clicking a tree node selects it before opening the context menu.
-- Edits are autosaved and flushed when the window closes.
-- The UI is rendered with the system WebView instead of JavaFX WebView.
+startup.
 
 ## Tests
 
