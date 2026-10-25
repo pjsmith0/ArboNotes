@@ -97,3 +97,75 @@ jobs:
           name: ArboNotes-${{ matrix.platform }}
           path: dist/${{ matrix.archive }}
           if-no-files-found: error
+
+  # Workflow artifacts require a signed-in GitHub account and expire after
+  # 90 days. Publishing them on a GitHub Release gives permanent, public
+  # download links. The "latest" tag is moved to each new build on main, so
+  # these URLs always point at the newest successful build:
+  #   https://github.com/<owner>/<repo>/releases/download/latest/ArboNotes-linux-x86_64.tar.gz
+  #   https://github.com/<owner>/<repo>/releases/download/latest/ArboNotes-windows-x86_64.zip
+  release:
+    name: Publish latest build
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required to move the "latest" tag and write the release assets.
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download built archives
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # Keep the tag pointing at the commit that was actually built, so the
+      # release's auto-generated source archives match the binaries.
+      - name: Move the "latest" tag to this commit
+        run: |
+          git tag -f latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
+
+      - name: Create or update the "latest" release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          short_sha="$(git rev-parse --short=8 HEAD)"
+          subject="$(git log -1 --pretty=%s)"
+          built="$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+          cat > notes.md <<EOF
+          Automated build of the latest \`main\` commit.
+
+          - Commit: [\`${short_sha}\`](https://github.com/${GH_REPO}/commit/${GITHUB_SHA}) — ${subject}
+          - Built: ${built}
+          - Workflow run: https://github.com/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}
+
+          | Platform | Download |
+          | --- | --- |
+          | Linux x86_64 | [\`ArboNotes-linux-x86_64.tar.gz\`](https://github.com/${GH_REPO}/releases/download/latest/ArboNotes-linux-x86_64.tar.gz) |
+          | Windows x86_64 | [\`ArboNotes-windows-x86_64.zip\`](https://github.com/${GH_REPO}/releases/download/latest/ArboNotes-windows-x86_64.zip) |
+
+          Linux: \`tar -xzf ArboNotes-linux-x86_64.tar.gz && ./arbonotes\` (needs the WebKitGTK 4.1 runtime, see the README).
+          EOF
+
+          if gh release view latest >/dev/null 2>&1; then
+            gh release edit latest --title "Latest build" --notes-file notes.md --latest
+          else
+            gh release create latest --title "Latest build" --notes-file notes.md --latest --target main
+          fi
+
+          gh release upload latest dist/* --clobber
+
+          {
+            echo "## Downloads"
+            echo
+            echo "- [Linux](https://github.com/${GH_REPO}/releases/download/latest/ArboNotes-linux-x86_64.tar.gz)"
+            echo "- [Windows](https://github.com/${GH_REPO}/releases/download/latest/ArboNotes-windows-x86_64.zip)"
+          } >> "$GITHUB_STEP_SUMMARY"

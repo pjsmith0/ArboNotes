@@ -1,11 +1,4 @@
-# ArboNotes (Rust)
-
-A Rust/Tauri rewrite of the JavaFX [ArboNotes](../ArboNotes) desktop note-taking
-application. It keeps the same note format and data directory, so the two
-applications can be pointed at the same data.
-
-For architecture, behavior details, development conventions, and the
-append-only request/feature history, see [`AGENTS.md`](AGENTS.md).
+# ArboNotes
 
 ## Features
 
@@ -69,7 +62,28 @@ cargo tauri build
 Bundle metadata (product name, identifier, icons, window defaults) lives in
 `tauri.conf.json`; platform permissions live in `capabilities/default.json`.
 
-## Prebuilt executables (GitHub Actions)
+## Download a build
+
+Every successful build of `main` is published on the
+[**Latest build** release](https://github.com/pjsmith0/ArboNotes/releases/tag/latest),
+so no GitHub account is needed:
+
+| Platform | Direct download |
+| --- | --- |
+| Linux x86_64 | [`ArboNotes-linux-x86_64.tar.gz`](https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-linux-x86_64.tar.gz) |
+| Windows x86_64 | [`ArboNotes-windows-x86_64.zip`](https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-windows-x86_64.zip) |
+
+The Linux tarball keeps the executable bit; extract it with
+`tar -xzf ArboNotes-linux-x86_64.tar.gz` and run `./arbonotes`. The Linux
+binary still needs the WebKitGTK runtime libraries listed under
+[Requirements](#requirements). The Windows zip contains `arbonotes.exe`;
+WebView2 is already present on current Windows 10/11 installs.
+
+The `latest` tag is moved to the newest built commit on each run, so the links
+above always point at the most recent successful build. Tagged releases such as
+`v0.0.2` are cut manually and are independent of this rolling release.
+
+### GitHub Actions
 
 `.github/workflows/build.yml` builds release executables for Linux and Windows
 on every push and pull request targeting `main` (and manually via
@@ -79,17 +93,16 @@ on every push and pull request targeting `main` (and manually via
 2. checks formatting with `cargo fmt --check`,
 3. runs `cargo test --locked`,
 4. builds with `cargo build --release --locked`,
-5. uploads the executable as a workflow artifact.
+5. uploads the executable as a workflow artifact (`ArboNotes-linux`,
+   `ArboNotes-windows`) — these require a signed-in GitHub account and expire
+   after 90 days,
+6. on `main` (or manual dispatch), publishes both archives to the rolling
+   `latest` release and adds download links to the run summary.
 
-| Artifact | Contents |
-| --- | --- |
-| `ArboNotes-linux` | `ArboNotes-linux-x86_64.tar.gz` containing `arbonotes` |
-| `ArboNotes-windows` | `ArboNotes-windows-x86_64.zip` containing `arbonotes.exe` |
-
-The Linux tarball keeps the executable bit; extract it with
-`tar -xzf ArboNotes-linux-x86_64.tar.gz` and run `./arbonotes`. The Linux
-binary still needs the WebKitGTK runtime libraries listed under
-[Requirements](#requirements).
+The release job needs `contents: write`, which the workflow requests
+explicitly. If the repository's Actions settings restrict `GITHUB_TOKEN` to
+read-only, the upload step will fail with a permission error until that setting
+is relaxed.
 
 ## Data location and compatibility
 

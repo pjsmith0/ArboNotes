@@ -129,6 +129,36 @@ at compile time from `frontend/`. README and AGENTS.md were updated with the CI
 details. Note: the repo currently has no git remote, so the workflow only runs
 once the project is pushed to GitHub with `main` as the default branch.
 
+### R5 — Publish downloadable builds on a rolling GitHub Release (2026-10-25)
+
+> "Have a look at this repo: https://github.com/pjsmith0/ArboNotes where can I
+> download the builds (executables)?"
+
+> "Yes, add that please" (add a stable, sign-in-free download link)
+
+**Implemented:** `.github/workflows/build.yml` gained a `release` job that runs
+after `build` on pushes to `main` and on manual dispatch (never on pull
+requests). It downloads both platform artifacts, force-moves the `latest` tag to
+`$GITHUB_SHA`, creates or updates the **Latest build** release, uploads
+`ArboNotes-linux-x86_64.tar.gz` and `ArboNotes-windows-x86_64.zip` with
+`--clobber`, marks it as the repository's latest release, and appends the two
+download links to the run summary. Because the release is rolling, these URLs
+are permanent and need no GitHub login:
+
+- `https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-linux-x86_64.tar.gz`
+- `https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-windows-x86_64.zip`
+
+The pre-existing release pages (`v0.0.1`, `v0.0.2`) only carry auto-generated
+source archives, which is why no executables were downloadable before.
+Workflow artifacts remain in place for PR builds. The job requests
+`permissions: contents: write` (the workflow default is `contents: read`) so it
+can push the tag and write release assets. `README.md` now starts with a
+"Download a build" section; the release notes and run summary are generated
+from the commit subject, short SHA, UTC build time, and run URL. Versioned
+releases stay manual and are unaffected. Manually validated by running the
+release step's shell script with a stubbed `gh` for both the create and update
+paths; YAML parses cleanly.
+
 ## 3. Technology and project layout
 
 - **Backend:** Rust 2021, Tauri 2, Serde/Serde JSON, Chrono, Regex,
@@ -341,6 +371,21 @@ restores the Cargo cache, runs `cargo fmt --check` (Linux only), `cargo test
 --locked`, then `cargo build --release --locked`. Keep the workflow's Linux
 package list in sync with the README's Debian/Ubuntu prerequisites, and keep
 `--locked` working by committing `Cargo.lock` updates.
+
+A second `release` job (`needs: build`, skipped for pull requests) then
+publishes both archives on the rolling **Latest build** release and force-moves
+the `latest` tag to the built commit, so these public, login-free URLs always
+serve the newest successful `main` build:
+
+- `https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-linux-x86_64.tar.gz`
+- `https://github.com/pjsmith0/ArboNotes/releases/download/latest/ArboNotes-windows-x86_64.zip`
+
+That job needs `permissions: contents: write` for the tag push and asset
+uploads; do not lower it, and do not switch it to `--prerelease`, because
+`/releases/latest` would stop resolving to it. Versioned releases (`v0.0.1`,
+`v0.0.2`, …) remain manual. Workflow artifacts are kept for PR builds; they
+require a signed-in GitHub account and expire after 90 days, unlike release
+assets.
 
 ## 8. Development constraints and gotchas
 
