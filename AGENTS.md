@@ -159,6 +159,23 @@ releases stay manual and are unaffected. Manually validated by running the
 release step's shell script with a stubbed `gh` for both the create and update
 paths; YAML parses cleanly.
 
+### R6 — Fix tree drag-and-drop on Windows (2026-10-28)
+
+> "The drag and drop of notes in the tree view does not work on windows systems
+> but do on linux. Can you fix it please?"
+
+**Implemented:** Added `"dragDropEnabled": false` to the main window in
+`tauri.conf.json`. Tauri installs a native drag-drop handler on Windows that
+replaces WebView2's HTML5 drag-drop handling, so drag events never reached the
+frontend tree rows; this is why the same code worked on Linux/WebKit. Tauri's
+`WindowConfig` documentation states that disabling this setting is required for
+HTML5 drag-and-drop on Windows. The app does not use Tauri's native `DragDropEvent`
+API (the frontend only listens to DOM `dragstart`/`dragover`/`drop` events), so
+no functionality is lost. Verified with `cargo fmt --check`, `cargo build`, and
+`cargo test --locked`; Windows behavior still needs a manual check on a Windows
+machine (the Linux build still starts and behaves normally). Do not re-enable
+`dragDropEnabled` without replacing the HTML5 drag-and-drop implementation.
+
 ## 3. Technology and project layout
 
 - **Backend:** Rust 2021, Tauri 2, Serde/Serde JSON, Chrono, Regex,
@@ -407,6 +424,10 @@ assets.
 - **Do not reintroduce source-map comments** in vendored Quill assets; they were
   removed to avoid WebView console warnings.
 - **Icons must be RGBA** PNGs; Tauri rejects some other color types.
+- **Keep `"dragDropEnabled": false`** in the window config
+  (`tauri.conf.json`). Tauri's native drag-drop handler replaces WebView2's
+  HTML5 handling on Windows and breaks tree drag-and-drop; the app uses only DOM
+  drag events, not Tauri's `DragDropEvent` API.
 - **Do not modify the Java project** at `/home/pjs/code/ArboNotes`; read it only
   as a reference for behavior or assets.
 - **Vendored assets:** Quill and highlight.js are checked in under
